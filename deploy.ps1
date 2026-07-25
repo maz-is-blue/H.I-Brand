@@ -44,7 +44,18 @@ $CPanelHostName = Read-Host "SFTP/cPanel hostname (from your hosting welcome ema
 $SftpPort      = Read-Host "SFTP port (check cPanel > Manage SSH > Access Details > 'SSH port' - often not 2222) [2222]"
 if (-not $SftpPort) { $SftpPort = 2222 }
 $CPanelUser    = Read-Host "cPanel username"
-$CPanelCred    = Get-Credential -UserName $CPanelUser -Message "cPanel password (used for SFTP)"
+
+$useKeyAns = Read-Host "Authenticate SFTP with an SSH key instead of a password? (Y/n)"
+$UseKeyAuth = -not ($useKeyAns -match '^[Nn]')
+
+if ($UseKeyAuth) {
+    $KeyFilePath = Read-Host "Path to the private key file you downloaded from cPanel > Manage SSH Keys"
+    $KeyPassphrase = Read-PlainSecret "Key passphrase (leave blank at the prompt if you didn't set one)"
+    $securePass = ConvertTo-SecureString $KeyPassphrase -AsPlainText -Force
+    $CPanelCred = New-Object System.Management.Automation.PSCredential($CPanelUser, $securePass)
+} else {
+    $CPanelCred = Get-Credential -UserName $CPanelUser -Message "cPanel password (used for SFTP)"
+}
 
 $RemoteAppDir = Read-Host "Remote folder name for the Laravel app, kept outside public_html [hibrand_app]"
 if (-not $RemoteAppDir) { $RemoteAppDir = 'hibrand_app' }
@@ -207,7 +218,9 @@ ADMIN_PASSWORD=$AdminPassword
 "@ | Set-Content (Join-Path $stageApp '.env') -NoNewline
 
 # ---------------------------------------------------------------------------
-# 4. Upload over SFTP (port 2222 - works even without shell/Terminal access)
+# 4. Zip locally, upload one archive per side, unzip remotely over SSH.
+#    (Uploading vendor/'s thousands of small files one-by-one over SFTP is
+#    extremely slow -- one archive upload + one remote unzip is far faster.)
 # ---------------------------------------------------------------------------
 if (-not (Get-Module -ListAvailable -Name Posh-SSH)) {
     Write-Host "`n== Installing Posh-SSH module (one-time) ==" -ForegroundColor Cyan
@@ -215,29 +228,47 @@ if (-not (Get-Module -ListAvailable -Name Posh-SSH)) {
 }
 Import-Module Posh-SSH
 
-function Send-FolderRecursive($session, [string]$LocalPath, [string]$RemotePath) {
-    if (-not (Test-SFTPPath -SFTPSession $session -Path $RemotePath)) {
-        New-SFTPItem -SFTPSession $session -Path $RemotePath -ItemType Directory | Out-Null
-    }
-    Get-ChildItem -Path $LocalPath -Force | ForEach-Object {
-        $remoteChild = "$RemotePath/$($_.Name)"
-        if ($_.PSIsContainer) {
-            Send-FolderRecursive $session $_.FullName $remoteChild
-        } else {
-            Set-SFTPItem -SFTPSession $session -Path $_.FullName -Destination $RemotePath -Force | Out-Null
-        }
-    }
+Write-Host "`n== Compressing files for upload ==" -ForegroundColor Cyan
+$appZip = Join-Path $stage 'app.zip'
+Compress-Archive -Path (Join-Path $stageApp '*') -DestinationPath $appZip -Force
+if (-not $UseCustomDocRoot) {
+    $webZip = Join-Path $stage 'web.zip'
+    Compress-Archive -Path (Join-Path $webroot '*') -DestinationPath $webZip -Force
 }
 
+$remoteHome = "/home/$CPanelUser"
+$connParams = @{
+    ComputerName = $CPanelHostName
+    Port         = $SftpPort
+    Credential   = $CPanelCred
+    AcceptKey    = $true
+    ErrorAction  = 'Stop'
+}
+if ($UseKeyAuth) { $connParams['KeyFile'] = $KeyFilePath }
+
 Write-Host "`n== Connecting over SFTP to $CPanelHostName ==" -ForegroundColor Cyan
-$sftp = New-SFTPSession -ComputerName $CPanelHostName -Port $SftpPort -Credential $CPanelCred -AcceptKey -ErrorAction Stop
+$sftp = New-SFTPSession @connParams
 
-Write-Host "Uploading Laravel app to ~/$RemoteAppDir ..." -ForegroundColor Cyan
-Send-FolderRecursive $sftp $stageApp $RemoteAppDir
-
+Write-Host "Uploading app.zip ..." -ForegroundColor Cyan
+Set-SFTPItem -SFTPSession $sftp -Path $appZip -Destination $remoteHome -Force | Out-Null
 if (-not $UseCustomDocRoot) {
-    Write-Host "Uploading merged web root to ~/public_html ..." -ForegroundColor Cyan
-    Send-FolderRecursive $sftp $webroot 'public_html'
+    Write-Host "Uploading web.zip ..." -ForegroundColor Cyan
+    Set-SFTPItem -SFTPSession $sftp -Path $webZip -Destination $remoteHome -Force | Out-Null
+}
+Remove-SFTPSession -SFTPSession $sftp | Out-Null
+
+Write-Host "`n== Extracting on the server over SSH ==" -ForegroundColor Cyan
+$ssh = New-SSHSession @connParams
+
+function Invoke-Remote([string]$cmd) {
+    $r = Invoke-SSHCommand -SSHSession $ssh -Command $cmd -TimeOut 300
+    if ($r.Output) { Write-Host $r.Output }
+    if ($r.ExitStatus -ne 0) { throw "Remote command failed (exit $($r.ExitStatus)): $cmd" }
+}
+
+Invoke-Remote "mkdir -p ~/$RemoteAppDir && unzip -o -q ~/app.zip -d ~/$RemoteAppDir && rm ~/app.zip"
+if (-not $UseCustomDocRoot) {
+    Invoke-Remote "mkdir -p ~/public_html && unzip -o -q ~/web.zip -d ~/public_html && rm ~/web.zip"
 }
 
 # ---------------------------------------------------------------------------
@@ -255,13 +286,11 @@ try {
     Write-Host "Then delete _migrate.php from the server yourself." -ForegroundColor Yellow
 }
 
-$remoteMigratePath = if ($UseCustomDocRoot) { "$RemoteAppDir/public/_migrate.php" } else { 'public_html/_migrate.php' }
-if (Test-SFTPPath -SFTPSession $sftp -Path $remoteMigratePath) {
-    Remove-SFTPItem -SFTPSession $sftp -Path $remoteMigratePath -Force
-    Write-Host "Removed one-time migration script from the server." -ForegroundColor Green
-}
+$remoteMigratePath = if ($UseCustomDocRoot) { "~/$RemoteAppDir/public/_migrate.php" } else { '~/public_html/_migrate.php' }
+Invoke-Remote "rm -f $remoteMigratePath"
+Write-Host "Removed one-time migration script from the server." -ForegroundColor Green
 
-Remove-SFTPSession -SFTPSession $sftp | Out-Null
+Remove-SSHSession -SSHSession $ssh | Out-Null
 Remove-Item $stage -Recurse -Force
 
 Write-Host "`nDone. Visit https://$Domain to check the site, and https://$Domain/api/products for the API." -ForegroundColor Green

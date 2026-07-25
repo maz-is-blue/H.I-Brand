@@ -1,5 +1,5 @@
 <?php
-if (($_GET['token'] ?? '') !== 'd4dae5de02fa42d3aa99468900ac80cc') { http_response_code(404); exit('Not found'); }
+if (($_GET['token'] ?? '') !== '8481b6c1e7ee4e3b891350a4e013e2f8') { http_response_code(404); exit('Not found'); }
 require __DIR__.'/../hibrand_app/vendor/autoload.php';
 $app = require_once __DIR__.'/../hibrand_app/bootstrap/app.php';
 $kernel = $app->make(Illuminate\Contracts\Console\Kernel::class);
