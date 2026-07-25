@@ -10,12 +10,16 @@ class AdminAuthController extends Controller
 {
     public function login(Request $request)
     {
-        $request->validate(['password' => 'required|string']);
+        $request->validate([
+            'username' => 'required|string',
+            'password' => 'required|string',
+        ]);
 
-        $correct = config('app.admin_password', 'hibrands');
+        $correctUsername = config('app.admin_username', 'admin');
+        $correctPassword = config('app.admin_password', 'hibrands');
 
-        if ($request->password !== $correct) {
-            return response()->json(['message' => 'Incorrect password.'], 401);
+        if ($request->username !== $correctUsername || $request->password !== $correctPassword) {
+            return response()->json(['message' => 'Incorrect username or password.'], 401);
         }
 
         $token = Str::random(64);

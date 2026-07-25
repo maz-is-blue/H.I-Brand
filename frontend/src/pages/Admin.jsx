@@ -11,6 +11,7 @@ const fieldInput = { width: '100%', background: '#0a0a0a', border: '1px solid va
 const fieldLabel = { display: 'block', fontFamily: 'var(--font-sans)', fontSize: '10px', letterSpacing: '0.18em', textTransform: 'uppercase', color: 'var(--text-dim)', marginBottom: '8px' }
 
 function Login({ onAuth }) {
+  const [username, setUsername] = useState('')
   const [pw, setPw] = useState('')
   const [err, setErr] = useState('')
   const [loading, setLoading] = useState(false)
@@ -18,11 +19,11 @@ function Login({ onAuth }) {
     e.preventDefault()
     setLoading(true); setErr('')
     try {
-      const res = await api.adminLogin(pw)
+      const res = await api.adminLogin(username, pw)
       localStorage.setItem('hib_admin_token', res.token)
       onAuth()
     } catch {
-      setErr('Incorrect password.')
+      setErr('Incorrect username or password.')
     } finally { setLoading(false) }
   }
   return (
@@ -32,8 +33,12 @@ function Login({ onAuth }) {
         <h1 className="font-display text-center mt-6" style={{ fontSize: '26px', color: '#fff' }}>Admin Access</h1>
         <p className="text-center mt-2" style={{ color: 'var(--text-dim)', fontSize: '13px' }}>H.I. Brands product console</p>
         <div className="mt-8">
+          <label style={fieldLabel}>Username</label>
+          <input type="text" value={username} autoFocus autoCapitalize="off" autoCorrect="off" onChange={(e) => { setUsername(e.target.value); setErr('') }} style={{ ...fieldInput, borderColor: err ? '#e06a5a' : 'var(--line-strong)' }} placeholder="username" />
+        </div>
+        <div className="mt-5">
           <label style={fieldLabel}>Password</label>
-          <input type="password" value={pw} autoFocus onChange={(e) => { setPw(e.target.value); setErr('') }} style={{ ...fieldInput, borderColor: err ? '#e06a5a' : 'var(--line-strong)' }} placeholder="••••••••" />
+          <input type="password" value={pw} onChange={(e) => { setPw(e.target.value); setErr('') }} style={{ ...fieldInput, borderColor: err ? '#e06a5a' : 'var(--line-strong)' }} placeholder="••••••••" />
           {err && <p style={{ color: '#e06a5a', fontSize: '12px', marginTop: '8px' }}>{err}</p>}
         </div>
         <button type="submit" className="btn-gold w-full mt-7" style={{ cursor: 'pointer' }} disabled={loading}>

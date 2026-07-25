@@ -21,6 +21,6 @@ export const api = {
   createProduct: (data) => request('POST', '/products', data),
   updateProduct: (id, data) => request('PUT', `/products/${id}`, data),
   deleteProduct: (id) => request('DELETE', `/products/${id}`),
-  adminLogin: (password) => request('POST', '/admin/login', { password }),
+  adminLogin: (username, password) => request('POST', '/admin/login', { username, password }),
   adminLogout: () => request('POST', '/admin/logout'),
 }
