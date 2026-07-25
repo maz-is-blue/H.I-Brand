@@ -15,3 +15,6 @@ frontend/dist/
 # System
 .DS_Store
 Thumbs.db
+
+# Deploy staging (deploy.ps1 build output, never meant to be tracked)
+_deploy_stage/
