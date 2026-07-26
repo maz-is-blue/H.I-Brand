@@ -100,7 +100,7 @@ export default function Home() {
             <Reveal delay={500} className="mt-9">
               <h1 style={{ lineHeight: isAr ? 1.35 : 1.16, textWrap: 'balance' }}>
                 <span className="block" style={{ ...disp, fontSize: isAr ? 'clamp(2rem,6vw,4.6rem)' : 'clamp(1.9rem,5vw,4.2rem)', color: 'rgba(255,255,255,0.95)' }}>{T.l1}</span>
-                <span className={isAr ? 'block' : 'block gold-grad'} style={{ ...dispI, fontWeight: isAr ? 400 : 500, fontSize: 'clamp(2.6rem,8.5vw,7.2rem)', lineHeight: 1.04, color: 'var(--gold)', marginTop: isAr ? '2px' : '10px', letterSpacing: isAr ? '0' : '0.01em' }}>{T.l2}</span>
+                <span className={isAr ? 'block' : 'block gold-grad'} style={{ ...dispI, fontWeight: isAr ? 400 : 500, fontSize: 'clamp(2.6rem,8.5vw,7.2rem)', lineHeight: 1.25, paddingBottom: '0.1em', color: 'var(--gold)', marginTop: isAr ? '2px' : '10px', letterSpacing: isAr ? '0' : '0.01em' }}>{T.l2}</span>
               </h1>
             </Reveal>
             <Reveal delay={780} className="mt-10">
