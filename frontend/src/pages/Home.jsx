@@ -56,8 +56,8 @@ export default function Home() {
 
   const T = isAr ? {
     place: 'دمشق · سوريا', cat: 'أزياء رجالية',
-    l1: 'ملابسك هويتك..', l2: 'اختر بشكل صحيح', sub: 'Your outfit is your identity.. Choose right',
-    shop: 'تسوّق الآن', house: 'قصة الدار', scroll: 'مرّر',
+    l1: 'ملابسك هويتك..', l2: 'اختر بشكل صحيح',
+    shop: 'تسوّق الآن', house: 'قصة الدار',
     manKick: 'البيان', man1: 'نختار ', manGold: 'القطعة التي تتحدّث', man2: ' قبل أن تنطق. ماركات أصلية، منتقاة بعناية، تصل إلى كل محافظة سورية.',
     selKick: 'المختارات', selTitle: 'قطع مميزة', viewAll: 'شاهد التشكيلة كاملة',
     aboutKick: 'الدار', aboutTitle: 'من قلب دمشق لكل المحافظات السورية', aboutBody: 'من دكان صغير إلى وجهة للرجل الذي يعرف ما يريد. نجلب أرقى الماركات إلى عتبة بابك.', readMore: 'اقرأ قصتنا',
@@ -65,8 +65,8 @@ export default function Home() {
     ctaTitle: 'تواصل معنا واطلب الآن', ctaSub: 'راسلنا على واتساب وسنرتّب طلبك خطوة بخطوة.', ctaBtn: 'تحدّث عبر واتساب',
   } : {
     place: 'Damascus · Syria', cat: 'Menswear',
-    l1: 'Your outfit is your identity..', l2: 'Choose right', sub: 'ملابسك هويتك.. اختر بشكل صحيح',
-    shop: 'Shop Now', house: 'The House', scroll: 'Scroll',
+    l1: 'Your outfit is your identity..', l2: 'Choose right',
+    shop: 'Shop Now', house: 'The House',
     manKick: 'Manifesto', man1: 'We choose the ', manGold: 'piece that speaks', man2: ' before you do. Authentic labels, handpicked, delivered to every governorate in Syria.',
     selKick: 'The Selection', selTitle: 'Featured Pieces', viewAll: 'View the full collection',
     aboutKick: 'The House', aboutTitle: 'From the heart of Damascus to all of Syria', aboutBody: "From a small storefront to a destination for the man who knows what he wants — we bring the world's sharpest labels to your door.", readMore: 'Read our story',
@@ -103,9 +103,6 @@ export default function Home() {
                 <span className={isAr ? 'block' : 'block gold-grad'} style={{ ...dispI, fontWeight: isAr ? 400 : 500, fontSize: 'clamp(2.6rem,8.5vw,7.2rem)', lineHeight: 1.04, color: 'var(--gold)', marginTop: isAr ? '2px' : '10px', letterSpacing: isAr ? '0' : '0.01em' }}>{T.l2}</span>
               </h1>
             </Reveal>
-            <Reveal delay={640} className="mt-6">
-              <p style={{ color: 'var(--text-dim)', fontFamily: isAr ? 'var(--font-sans)' : 'var(--font-ar-display)', fontSize: isAr ? '13px' : '22px', letterSpacing: isAr ? '0.05em' : '0' }}>{T.sub}</p>
-            </Reveal>
             <Reveal delay={780} className="mt-10">
               <div className="flex flex-wrap items-center justify-center gap-4">
                 <Magnetic as={Link} to="/collections" className="btn-gold" strength={0.4} data-cursor>{T.shop}</Magnetic>
@@ -115,7 +112,6 @@ export default function Home() {
           </div>
         </div>
         <a href="#manifesto" className="absolute left-1/2 -translate-x-1/2 flex flex-col items-center gap-2" style={{ bottom: '30px', color: 'var(--text-dim)', zIndex: 2 }} data-cursor>
-          <span style={{ fontSize: '10px', letterSpacing: '0.3em', textTransform: isAr ? 'none' : 'uppercase', fontFamily: isAr ? 'var(--font-ar)' : 'var(--font-sans)' }}>{T.scroll}</span>
           <span style={{ display: 'block', width: '1px', height: '44px', background: 'linear-gradient(var(--gold),transparent)' }}></span>
         </a>
       </section>
