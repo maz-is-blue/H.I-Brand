@@ -1,4 +1,4 @@
-import { HashRouter as BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { LanguageProvider } from './context/LanguageContext'
 import { ProductsProvider } from './context/ProductsContext'
 import Home from './pages/Home'
