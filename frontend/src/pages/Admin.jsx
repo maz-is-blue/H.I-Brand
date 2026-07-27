@@ -36,11 +36,11 @@ function Login({ onAuth }) {
         <p className="text-center mt-2" style={{ color: 'var(--text-dim)', fontSize: '13px' }}>H.I. Brands product console</p>
         <div className="mt-8">
           <label style={fieldLabel}>Username</label>
-          <input type="text" value={username} autoFocus autoCapitalize="off" autoCorrect="off" onChange={(e) => { setUsername(e.target.value); setErr('') }} style={{ ...fieldInput, borderColor: err ? '#e06a5a' : 'var(--line-strong)' }} placeholder="username" />
+          <input type="text" value={username} autoFocus autoCapitalize="off" autoCorrect="off" autoComplete="off" onChange={(e) => { setUsername(e.target.value); setErr('') }} style={{ ...fieldInput, borderColor: err ? '#e06a5a' : 'var(--line-strong)' }} placeholder="username" />
         </div>
         <div className="mt-5">
           <label style={fieldLabel}>Password</label>
-          <input type="password" value={pw} onChange={(e) => { setPw(e.target.value); setErr('') }} style={{ ...fieldInput, borderColor: err ? '#e06a5a' : 'var(--line-strong)' }} placeholder="••••••••" />
+          <input type="password" value={pw} autoComplete="off" onChange={(e) => { setPw(e.target.value); setErr('') }} style={{ ...fieldInput, borderColor: err ? '#e06a5a' : 'var(--line-strong)' }} placeholder="••••••••" />
           {err && <p style={{ color: '#e06a5a', fontSize: '12px', marginTop: '8px' }}>{err}</p>}
         </div>
         <button type="submit" className="btn-gold w-full mt-7" style={{ cursor: 'pointer' }} disabled={loading}>
