@@ -1,16 +1,40 @@
 import { useState } from 'react'
 import { useLang } from '../context/LanguageContext'
 import { useProducts, CATEGORIES, waLink } from '../context/ProductsContext'
+import { useContent, pick, pickImage } from '../context/ContentContext'
 import { Reveal } from '../components/ui/Reveal'
 import { Cursor } from '../components/ui/Cursor'
 import { Curtain } from '../components/ui/Curtain'
 import { Placeholder } from '../components/ui/Placeholder'
+import { ContentImage } from '../components/ui/ContentImage'
 import { BrandStrip } from '../components/ui/BrandStrip'
 import { Icon } from '../components/ui/Icon'
 import { Nav } from '../components/Nav'
 import { Footer } from '../components/Footer'
 
-function ProductCard({ p, isAr }) {
+const DEFAULT_CATEGORY_LABELS = {
+  All: 'All', Outerwear: 'Outerwear', Shirts: 'Shirts', Knitwear: 'Knitwear', 'T-Shirts': 'T-Shirts', Trousers: 'Trousers',
+}
+
+function buildT(content, isAr) {
+  const t = (key, en, ar) => pick(content, key, isAr, isAr ? ar : en)
+  return {
+    kick: t('collections.kick', 'The Collection · 2026', 'التشكيلة · 2026'),
+    title: t('collections.title', 'The Collection', 'التشكيلة'),
+    lead: t('collections.lead', "Curated pieces from the world's sharpest labels — for every occasion, for every man.", 'قطع منتقاة من أرقى الماركات العالمية — لكل مناسبة، ولكل رجل.'),
+    look: t('collections.look_kick', 'Lookbook', 'لوك بوك'),
+    lookTitle: t('collections.look_title', 'Effortless, uncompromising', 'أناقة بلا مجاملة'),
+    lookBody: t('collections.look_body', 'From the overcoat that opens winter to the shirt that makes your day.', 'من المعطف الذي يفتتح الشتاء إلى القميص الذي يصنع يومك.'),
+    lookImageLabel: t('collections.lookbook_image_label', 'lookbook image — large', 'صورة لوك بوك — كبيرة'),
+    lookDetailLabel: t('collections.lookbook_detail_label', 'detail', 'تفصيلة'),
+    countOne: t('collections.count_one', '{n} piece', '{n} قطعة'),
+    countOther: t('collections.count_other', '{n} pieces', '{n} قطعة'),
+    empty: t('collections.empty', 'No pieces in this category yet.', 'لا توجد قطع في هذه الفئة بعد.'),
+    orderBtn: t('collections.order_whatsapp_btn', 'Order via WhatsApp', 'اطلب عبر واتساب'),
+  }
+}
+
+function ProductCard({ p, isAr, orderBtn, whatsapp }) {
   return (
     <div className="group">
       <div className="relative overflow-hidden" style={{ border: '1px solid var(--line)' }}>
@@ -25,8 +49,8 @@ function ProductCard({ p, isAr }) {
             parent.addEventListener('mouseenter', show)
             parent.addEventListener('mouseleave', hide)
           }}>
-          <a href={waLink(p)} target="_blank" rel="noopener" className="btn-wa w-full" data-cursor style={{ padding: '12px' }}>
-            {Icon.wa('w-4 h-4')}{isAr ? 'اطلب عبر واتساب' : 'Order via WhatsApp'}
+          <a href={waLink(p, whatsapp)} target="_blank" rel="noopener" className="btn-wa w-full" data-cursor style={{ padding: '12px' }}>
+            {Icon.wa('w-4 h-4')}{orderBtn}
           </a>
         </div>
       </div>
@@ -44,26 +68,17 @@ function ProductCard({ p, isAr }) {
 export default function Collections() {
   const { isAr } = useLang()
   const { products, loading } = useProducts()
+  const { content } = useContent()
   const [cat, setCat] = useState('All')
 
   const cats = ['All', ...CATEGORIES]
   const filtered = cat === 'All' ? products : products.filter((p) => p.category === cat)
 
-  const catLabel = (c) => {
-    if (!isAr) return c
-    const m = { All: 'الكل', Outerwear: 'معاطف', Shirts: 'قمصان', Knitwear: 'تريكو', 'T-Shirts': 'تيشيرتات', Trousers: 'بناطيل' }
-    return m[c] || c
-  }
+  const catLabel = (c) => pick(content, `collections.category.${c}`, isAr, DEFAULT_CATEGORY_LABELS[c] || c)
 
-  const T = isAr ? {
-    kick: 'التشكيلة · 2026', title: 'التشكيلة', lead: 'قطع منتقاة من أرقى الماركات العالمية — لكل مناسبة، ولكل رجل.',
-    look: 'لوك بوك', lookTitle: 'أناقة بلا مجاملة', lookBody: 'من المعطف الذي يفتتح الشتاء إلى القميص الذي يصنع يومك.',
-    count: (n) => `${n} قطعة`, empty: 'لا توجد قطع في هذه الفئة بعد.',
-  } : {
-    kick: 'The Collection · 2026', title: 'The Collection', lead: "Curated pieces from the world's sharpest labels — for every occasion, for every man.",
-    look: 'Lookbook', lookTitle: 'Effortless, uncompromising', lookBody: 'From the overcoat that opens winter to the shirt that makes your day.',
-    count: (n) => `${n} ${n === 1 ? 'piece' : 'pieces'}`, empty: 'No pieces in this category yet.',
-  }
+  const T = buildT(content, isAr)
+  const whatsapp = pick(content, 'settings.whatsapp_number', isAr, '963000000000')
+  const count = (n) => (n === 1 ? T.countOne : T.countOther).replace('{n}', n)
   const disp = isAr ? { fontFamily: 'var(--font-ar-display)' } : { fontFamily: 'var(--font-display)' }
 
   return (
@@ -86,13 +101,13 @@ export default function Collections() {
         <Reveal clip>
           <div className="grid md:grid-cols-12 gap-5 items-end" style={{ direction: isAr ? 'rtl' : 'ltr' }}>
             <div className="md:col-span-7">
-              <Placeholder label={isAr ? 'صورة لوك بوك — كبيرة' : 'lookbook image — large'} ratio="16/10" className="group zoom-img" />
+              <ContentImage src={pickImage(content, 'collections.lookbook_image')} label={T.lookImageLabel} ratio="16/10" className="group zoom-img" />
             </div>
             <div className="md:col-span-5" style={{ textAlign: isAr ? 'right' : 'left' }}>
               <span className="label">{T.look}</span>
               <h2 className="mt-4" style={{ ...disp, fontStyle: isAr ? 'normal' : 'italic', fontSize: 'clamp(1.8rem,3.4vw,2.8rem)', color: '#fff', lineHeight: 1.15 }}>{T.lookTitle}</h2>
               <p className="mt-4" style={{ color: 'var(--text-dim)', fontFamily: isAr ? 'var(--font-ar)' : 'var(--font-sans)', fontSize: '15px', lineHeight: 1.7, maxWidth: '360px', marginInlineStart: isAr ? 'auto' : 0 }}>{T.lookBody}</p>
-              <div className="mt-6"><Placeholder label={isAr ? 'تفصيلة' : 'detail'} ratio="3/2" /></div>
+              <div className="mt-6"><ContentImage src={pickImage(content, 'collections.lookbook_detail_image')} label={T.lookDetailLabel} ratio="3/2" /></div>
             </div>
           </div>
         </Reveal>
@@ -109,7 +124,7 @@ export default function Collections() {
               </button>
             ))}
           </div>
-          <span style={{ color: 'var(--text-dim)', fontFamily: isAr ? 'var(--font-ar)' : 'var(--font-sans)', fontSize: '12px', letterSpacing: isAr ? '0' : '0.14em', textTransform: isAr ? 'none' : 'uppercase' }}>{T.count(filtered.length)}</span>
+          <span style={{ color: 'var(--text-dim)', fontFamily: isAr ? 'var(--font-ar)' : 'var(--font-sans)', fontSize: '12px', letterSpacing: isAr ? '0' : '0.14em', textTransform: isAr ? 'none' : 'uppercase' }}>{count(filtered.length)}</span>
         </div>
       </section>
 
@@ -122,7 +137,7 @@ export default function Collections() {
         ) : (
           <div key={cat} className="grid grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {filtered.map((p, i) => (
-              <Reveal key={p.id} delay={(i % 3) * 80}><ProductCard p={p} isAr={isAr} /></Reveal>
+              <Reveal key={p.id} delay={(i % 3) * 80}><ProductCard p={p} isAr={isAr} orderBtn={T.orderBtn} whatsapp={whatsapp} /></Reveal>
             ))}
           </div>
         )}

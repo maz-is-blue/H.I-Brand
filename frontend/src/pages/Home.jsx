@@ -1,17 +1,47 @@
 import { useRef, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
-import { useProducts, waLink } from '../context/ProductsContext'
+import { useProducts } from '../context/ProductsContext'
+import { useContent, pick, pickImage } from '../context/ContentContext'
 import { Monogram, MonogramDraw } from '../components/ui/Monogram'
 import { Reveal } from '../components/ui/Reveal'
 import { Cursor } from '../components/ui/Cursor'
 import { Curtain } from '../components/ui/Curtain'
 import { Magnetic } from '../components/ui/Magnetic'
 import { Placeholder } from '../components/ui/Placeholder'
+import { ContentImage } from '../components/ui/ContentImage'
 import { BrandStrip } from '../components/ui/BrandStrip'
 import { Icon } from '../components/ui/Icon'
 import { Nav } from '../components/Nav'
 import { Footer } from '../components/Footer'
+
+function buildT(content, isAr) {
+  const t = (key, en, ar) => pick(content, key, isAr, isAr ? ar : en)
+  return {
+    place: t('home.eyebrow_location', 'Damascus · Syria', 'دمشق · سوريا'),
+    cat: t('home.eyebrow_category', 'Menswear', 'أزياء رجالية'),
+    l1: t('home.hero_line1', 'Your outfit is your identity..', 'ملابسك هويتك..'),
+    l2: t('home.hero_line2', 'Choose right', 'اختر بشكل صحيح'),
+    shop: t('home.hero_shop_btn', 'Shop Now', 'تسوّق الآن'),
+    house: t('home.hero_house_btn', 'The House', 'قصة الدار'),
+    manKick: t('home.manifesto_kick', 'Manifesto', 'البيان'),
+    man1: t('home.manifesto_p1', 'We choose the ', 'نختار '),
+    manGold: t('home.manifesto_gold', 'piece that speaks', 'القطعة التي تتحدّث'),
+    man2: t('home.manifesto_p2', ' before you do. Authentic labels, handpicked, delivered to every governorate in Syria.', ' قبل أن تنطق. ماركات أصلية، منتقاة بعناية، تصل إلى كل محافظة سورية.'),
+    selKick: t('home.selection_kick', 'The Selection', 'المختارات'),
+    selTitle: t('home.selection_title', 'Featured Pieces', 'قطع مميزة'),
+    viewAll: t('home.selection_view_all', 'View the full collection', 'شاهد التشكيلة كاملة'),
+    aboutKick: t('home.about_kick', 'The House', 'الدار'),
+    aboutTitle: t('home.about_title', 'From the heart of Damascus to all of Syria', 'من قلب دمشق لكل المحافظات السورية'),
+    aboutBody: t('home.about_body', "From a small storefront to a destination for the man who knows what he wants — we bring the world's sharpest labels to your door.", 'من دكان صغير إلى وجهة للرجل الذي يعرف ما يريد. نجلب أرقى الماركات إلى عتبة بابك.'),
+    readMore: t('home.about_read_more', 'Read our story', 'اقرأ قصتنا'),
+    igKick: t('home.instagram_kick', 'On the feed', 'على إنستغرام'),
+    igFollow: t('home.instagram_follow', 'Follow @h.i.brands', 'تابعنا @h.i.brands'),
+    ctaTitle: t('home.cta_title', 'Reach out and order now', 'تواصل معنا واطلب الآن'),
+    ctaSub: t('home.cta_sub', "Message us on WhatsApp — we'll style the order with you.", 'راسلنا على واتساب وسنرتّب طلبك خطوة بخطوة.'),
+    ctaBtn: t('home.cta_btn', 'Chat on WhatsApp', 'تحدّث عبر واتساب'),
+  }
+}
 
 function FeaturedCard({ p, i, isAr }) {
   return (
@@ -35,6 +65,7 @@ function FeaturedCard({ p, i, isAr }) {
 export default function Home() {
   const { isAr } = useLang()
   const { products } = useProducts()
+  const { content } = useContent()
   const featured = products.filter((p) => p.featured).slice(0, 4)
   const heroRef = useRef(null)
 
@@ -54,25 +85,10 @@ export default function Home() {
     return () => cancelAnimationFrame(raf)
   }, [])
 
-  const T = isAr ? {
-    place: 'دمشق · سوريا', cat: 'أزياء رجالية',
-    l1: 'ملابسك هويتك..', l2: 'اختر بشكل صحيح',
-    shop: 'تسوّق الآن', house: 'قصة الدار',
-    manKick: 'البيان', man1: 'نختار ', manGold: 'القطعة التي تتحدّث', man2: ' قبل أن تنطق. ماركات أصلية، منتقاة بعناية، تصل إلى كل محافظة سورية.',
-    selKick: 'المختارات', selTitle: 'قطع مميزة', viewAll: 'شاهد التشكيلة كاملة',
-    aboutKick: 'الدار', aboutTitle: 'من قلب دمشق لكل المحافظات السورية', aboutBody: 'من دكان صغير إلى وجهة للرجل الذي يعرف ما يريد. نجلب أرقى الماركات إلى عتبة بابك.', readMore: 'اقرأ قصتنا',
-    igKick: 'على إنستغرام', igFollow: 'تابعنا @h.i.brands',
-    ctaTitle: 'تواصل معنا واطلب الآن', ctaSub: 'راسلنا على واتساب وسنرتّب طلبك خطوة بخطوة.', ctaBtn: 'تحدّث عبر واتساب',
-  } : {
-    place: 'Damascus · Syria', cat: 'Menswear',
-    l1: 'Your outfit is your identity..', l2: 'Choose right',
-    shop: 'Shop Now', house: 'The House',
-    manKick: 'Manifesto', man1: 'We choose the ', manGold: 'piece that speaks', man2: ' before you do. Authentic labels, handpicked, delivered to every governorate in Syria.',
-    selKick: 'The Selection', selTitle: 'Featured Pieces', viewAll: 'View the full collection',
-    aboutKick: 'The House', aboutTitle: 'From the heart of Damascus to all of Syria', aboutBody: "From a small storefront to a destination for the man who knows what he wants — we bring the world's sharpest labels to your door.", readMore: 'Read our story',
-    igKick: 'On the feed', igFollow: 'Follow @h.i.brands',
-    ctaTitle: 'Reach out and order now', ctaSub: 'Message us on WhatsApp — we\'ll style the order with you.', ctaBtn: 'Chat on WhatsApp',
-  }
+  const T = buildT(content, isAr)
+  const whatsapp = pick(content, 'settings.whatsapp_number', isAr, '963000000000')
+  const igUrl = pick(content, 'settings.instagram_url', isAr, 'https://instagram.com/h.i.brands')
+  const igHandle = pick(content, 'settings.instagram_handle', isAr, '@h.i.brands')
 
   const disp = isAr ? { fontFamily: 'var(--font-ar-display)' } : { fontFamily: 'var(--font-display)' }
   const dispI = isAr ? { fontFamily: 'var(--font-ar-display)' } : { fontFamily: 'var(--font-display)', fontStyle: 'italic' }
@@ -179,16 +195,16 @@ export default function Home() {
           <div className="flex items-end justify-between flex-wrap gap-3" style={{ marginBottom: '32px', flexDirection: isAr ? 'row-reverse' : 'row' }}>
             <div style={{ textAlign: isAr ? 'right' : 'left' }}>
               <span className="label">{T.igKick}</span>
-              <h2 className="mt-2 font-display" style={{ fontSize: 'clamp(1.4rem,3vw,2rem)', color: '#fff' }}>@h.i.brands</h2>
+              <h2 className="mt-2 font-display" style={{ fontSize: 'clamp(1.4rem,3vw,2rem)', color: '#fff' }}>{igHandle}</h2>
             </div>
-            <a href="https://instagram.com/h.i.brands" target="_blank" rel="noopener" className="inline-flex items-center gap-2 text-white/65 hover:text-gold transition-colors" data-cursor style={{ fontFamily: isAr ? 'var(--font-ar)' : 'var(--font-sans)', fontSize: '12px', letterSpacing: isAr ? '0' : '0.14em', textTransform: isAr ? 'none' : 'uppercase' }}>{Icon.ig('w-4 h-4')}{T.igFollow}</a>
+            <a href={igUrl} target="_blank" rel="noopener" className="inline-flex items-center gap-2 text-white/65 hover:text-gold transition-colors" data-cursor style={{ fontFamily: isAr ? 'var(--font-ar)' : 'var(--font-sans)', fontSize: '12px', letterSpacing: isAr ? '0' : '0.14em', textTransform: isAr ? 'none' : 'uppercase' }}>{Icon.ig('w-4 h-4')}{T.igFollow}</a>
           </div>
         </Reveal>
         <Reveal delay={120}>
           <div className="flex gap-4 overflow-x-auto no-bar pb-2" dir="ltr">
-            {[0,1,2,3,4,5].map((i) => (
-              <a key={i} href="https://instagram.com/h.i.brands" target="_blank" rel="noopener" className="group relative shrink-0" style={{ width: 'clamp(160px,42vw,240px)' }} data-cursor data-cursor-label="@h.i.brands">
-                <Placeholder label="@h.i.brands" ratio="1/1" className="zoom-img" />
+            {[1,2,3,4,5,6].map((i) => (
+              <a key={i} href={igUrl} target="_blank" rel="noopener" className="group relative shrink-0" style={{ width: 'clamp(160px,42vw,240px)' }} data-cursor data-cursor-label={igHandle}>
+                <ContentImage src={pickImage(content, `home.instagram_tile_${i}`)} alt={igHandle} label={igHandle} ratio="1/1" className="zoom-img" />
                 <div className="absolute inset-0 grid place-items-center transition-colors" style={{ background: 'rgba(5,5,5,0)' }}
                   onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(5,5,5,0.4)'}
                   onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(5,5,5,0)'}>
@@ -210,7 +226,7 @@ export default function Home() {
             <p className="mt-5" style={{ color: 'var(--text-dim)', fontFamily: isAr ? 'var(--font-ar)' : 'var(--font-sans)', fontSize: '15px', maxWidth: '440px', margin: '20px auto 0' }}>{T.ctaSub}</p>
           </Reveal>
           <Reveal delay={140} className="mt-10">
-            <Magnetic as="a" href="https://wa.me/963000000000" target="_blank" rel="noopener" className="btn-wa" strength={0.4} data-cursor>{Icon.wa('w-5 h-5')}{T.ctaBtn}</Magnetic>
+            <Magnetic as="a" href={`https://wa.me/${whatsapp}`} target="_blank" rel="noopener" className="btn-wa" strength={0.4} data-cursor>{Icon.wa('w-5 h-5')}{T.ctaBtn}</Magnetic>
           </Reveal>
         </div>
       </section>

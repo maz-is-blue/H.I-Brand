@@ -16,6 +16,20 @@ async function request(method, path, body) {
   return data
 }
 
+async function uploadFile(path, key, file) {
+  const form = new FormData()
+  form.append('key', key)
+  form.append('image', file)
+  const res = await fetch(`${BASE}${path}`, {
+    method: 'POST',
+    headers: { Accept: 'application/json', ...authHeaders() },
+    body: form,
+  })
+  const data = await res.json().catch(() => ({}))
+  if (!res.ok) throw Object.assign(new Error(data.message || 'Upload failed'), { status: res.status, data })
+  return data
+}
+
 export const api = {
   getProducts: () => request('GET', '/products'),
   createProduct: (data) => request('POST', '/products', data),
@@ -23,4 +37,7 @@ export const api = {
   deleteProduct: (id) => request('DELETE', `/products/${id}`),
   adminLogin: (username, password) => request('POST', '/admin/login', { username, password }),
   adminLogout: () => request('POST', '/admin/logout'),
+  getContent: () => request('GET', '/content'),
+  updateContent: (items) => request('PUT', '/content', { items }),
+  uploadContentImage: (key, file) => uploadFile('/content/image', key, file),
 }

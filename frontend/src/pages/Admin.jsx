@@ -4,6 +4,7 @@ import { Monogram, Wordmark } from '../components/ui/Monogram'
 import { Placeholder } from '../components/ui/Placeholder'
 import { useProducts, CATEGORIES } from '../context/ProductsContext'
 import { api } from '../services/api'
+import ContentEditor from './admin/ContentEditor'
 
 const RATIOS = ['3/4', '4/5', '1/1', '16/10']
 const card = { background: 'var(--stone)', border: '1px solid var(--line)' }
@@ -132,6 +133,49 @@ function ProductModal({ editing, onClose, onSave }) {
 }
 
 function Dashboard({ onLogout }) {
+  const [tab, setTab] = useState('products')
+
+  const logout = async () => {
+    try { await api.adminLogout() } catch {}
+    localStorage.removeItem('hib_admin_token')
+    onLogout()
+  }
+
+  return (
+    <div className="min-h-screen">
+      <header className="sticky top-0" style={{ zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px clamp(20px,4vw,40px)', background: 'rgba(5,5,5,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--line)' }}>
+        <div className="flex items-center gap-3">
+          <Monogram className="w-7 text-white" />
+          <div>
+            <Wordmark style={{ fontSize: '14px' }} className="text-white" />
+            <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--gold)', marginTop: '2px' }}>Console</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link to="/" className="text-white/60 hover:text-white transition-colors" style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>View site ↗</Link>
+          <button onClick={logout} className="btn-ghost" style={{ padding: '9px 18px', cursor: 'pointer' }}>Log out</button>
+        </div>
+      </header>
+
+      <main style={{ padding: 'clamp(28px,5vw,52px) clamp(20px,4vw,40px)', maxWidth: '1180px', margin: '0 auto' }}>
+        <div className="flex gap-2">
+          {[['products', 'Products'], ['content', 'Content']].map(([k, label]) => (
+            <button key={k} onClick={() => setTab(k)}
+              style={{ cursor: 'pointer', border: `1px solid ${tab === k ? 'var(--gold)' : 'var(--line-strong)'}`, color: tab === k ? '#0a0a0a' : 'rgba(255,255,255,0.75)', background: tab === k ? 'var(--gold)' : 'transparent', borderRadius: '999px', padding: '8px 20px', fontFamily: 'var(--font-sans)', fontSize: '11px', letterSpacing: '0.14em', textTransform: 'uppercase' }}>
+              {label}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-8">
+          {tab === 'products' ? <ProductsPanel /> : <ContentEditor />}
+        </div>
+      </main>
+    </div>
+  )
+}
+
+function ProductsPanel() {
   const { products, fetchProducts } = useProducts()
   const [modal, setModal] = useState(null)
   const [toast, setToast] = useState('')
@@ -173,49 +217,28 @@ function Dashboard({ onLogout }) {
     } catch {}
   }
 
-  const logout = async () => {
-    try { await api.adminLogout() } catch {}
-    localStorage.removeItem('hib_admin_token')
-    onLogout()
-  }
-
   const featured = products.filter((p) => p.featured).length
   const brands = new Set(products.map((p) => p.brand)).size
   const avg = products.length ? Math.round(products.reduce((s, p) => s + Number(p.price), 0) / products.length) : 0
 
   return (
-    <div className="min-h-screen">
-      <header className="sticky top-0" style={{ zIndex: 30, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px clamp(20px,4vw,40px)', background: 'rgba(5,5,5,0.85)', backdropFilter: 'blur(12px)', borderBottom: '1px solid var(--line)' }}>
-        <div className="flex items-center gap-3">
-          <Monogram className="w-7 text-white" />
-          <div>
-            <Wordmark style={{ fontSize: '14px' }} className="text-white" />
-            <div style={{ fontSize: '10px', letterSpacing: '0.24em', textTransform: 'uppercase', color: 'var(--gold)', marginTop: '2px' }}>Console</div>
-          </div>
+    <>
+      <div className="flex items-end justify-between flex-wrap gap-4">
+        <div>
+          <h1 className="font-display" style={{ fontSize: 'clamp(2rem,4vw,3rem)', color: '#fff' }}>Products</h1>
+          <p style={{ color: 'var(--text-dim)', fontSize: '14px', marginTop: '6px' }}>Manage the catalogue shown across the storefront.</p>
         </div>
-        <div className="flex items-center gap-3">
-          <Link to="/" className="text-white/60 hover:text-white transition-colors" style={{ fontSize: '12px', letterSpacing: '0.12em', textTransform: 'uppercase' }}>View site ↗</Link>
-          <button onClick={logout} className="btn-ghost" style={{ padding: '9px 18px', cursor: 'pointer' }}>Log out</button>
+        <div className="flex gap-3">
+          <button onClick={() => setModal({ editing: null })} className="btn-gold" style={{ padding: '11px 22px', cursor: 'pointer' }}>+ Add piece</button>
         </div>
-      </header>
+      </div>
 
-      <main style={{ padding: 'clamp(28px,5vw,52px) clamp(20px,4vw,40px)', maxWidth: '1180px', margin: '0 auto' }}>
-        <div className="flex items-end justify-between flex-wrap gap-4">
-          <div>
-            <h1 className="font-display" style={{ fontSize: 'clamp(2rem,4vw,3rem)', color: '#fff' }}>Products</h1>
-            <p style={{ color: 'var(--text-dim)', fontSize: '14px', marginTop: '6px' }}>Manage the catalogue shown across the storefront.</p>
-          </div>
-          <div className="flex gap-3">
-            <button onClick={() => setModal({ editing: null })} className="btn-gold" style={{ padding: '11px 22px', cursor: 'pointer' }}>+ Add piece</button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-9">
-          <Stat label="Total pieces" value={products.length} />
-          <Stat label="Featured" value={featured} sub="on homepage" />
-          <Stat label="Brands" value={brands} />
-          <Stat label="Avg price" value={`$${avg}`} />
-        </div>
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-9">
+        <Stat label="Total pieces" value={products.length} />
+        <Stat label="Featured" value={featured} sub="on homepage" />
+        <Stat label="Brands" value={brands} />
+        <Stat label="Avg price" value={`$${avg}`} />
+      </div>
 
         <div className="mt-9" style={{ ...card, borderRadius: '8px', overflow: 'hidden' }}>
           <div className="overflow-x-auto">
@@ -249,7 +272,6 @@ function Dashboard({ onLogout }) {
           </div>
           {products.length === 0 && <p style={{ textAlign: 'center', padding: '50px', color: 'var(--text-dim)', fontStyle: 'italic', fontFamily: 'var(--font-display)' }}>No pieces yet. Add your first.</p>}
         </div>
-      </main>
 
       {modal && <ProductModal editing={modal.editing} onClose={() => setModal(null)} onSave={handleSave} />}
 
@@ -269,7 +291,7 @@ function Dashboard({ onLogout }) {
       {toast && (
         <div className="fixed" style={{ zIndex: 300, bottom: '28px', left: '50%', transform: 'translateX(-50%)', background: 'var(--gold)', color: '#0a0a0a', padding: '12px 26px', borderRadius: '999px', fontSize: '13px', fontWeight: 600, letterSpacing: '0.05em', boxShadow: '0 12px 40px rgba(0,0,0,0.5)' }}>{toast}</div>
       )}
-    </div>
+    </>
   )
 }
 

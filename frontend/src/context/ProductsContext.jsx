@@ -20,9 +20,9 @@ const SEED_PRODUCTS = [
   { id: 12, brand: 'Guess',             name_en: 'Cable Knit Sweater',  name_ar: 'سترة محبوكة',   price: 60,  category: 'Knitwear',  image_ratio: '1/1', featured: false },
 ]
 
-export function waLink(p) {
+export function waLink(p, whatsappNumber = '963000000000') {
   const msg = encodeURIComponent(`Hi H.I. Brands! I'd like to order the ${p.brand} — ${p.name_en} ($${p.price}).`)
-  return `https://wa.me/963000000000?text=${msg}`
+  return `https://wa.me/${whatsappNumber}?text=${msg}`
 }
 
 export function ProductsProvider({ children }) {

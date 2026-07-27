@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom'
 import { useLang } from '../context/LanguageContext'
+import { useContent, pick } from '../context/ContentContext'
 import { Monogram } from '../components/ui/Monogram'
 import { Reveal } from '../components/ui/Reveal'
 import { Cursor } from '../components/ui/Cursor'
@@ -8,43 +9,54 @@ import { Magnetic } from '../components/ui/Magnetic'
 import { Nav } from '../components/Nav'
 import { Footer } from '../components/Footer'
 
+const DEFAULT_VALUES_EN = [
+  { n: '01', t: 'Guaranteed authenticity', d: 'Original international labels only — no imitations, no half measures.' },
+  { n: '02', t: 'All of Syria', d: 'Delivery to every governorate, with door-to-door boutique service.' },
+  { n: '03', t: 'Personal styling', d: 'We help you choose the look that suits you and the occasion.' },
+  { n: '04', t: 'Damascene pride', d: "From the heart of the world's oldest inhabited capital, to your wardrobe." },
+]
+const DEFAULT_VALUES_AR = [
+  { n: '01', t: 'أصالة مضمونة', d: 'ماركات عالمية أصلية فقط — لا تقليد، لا أنصاف حلول.' },
+  { n: '02', t: 'نصل لكل سوريا', d: 'توصيل إلى كل المحافظات، بخدمة بوتيك من الباب إلى الباب.' },
+  { n: '03', t: 'تنسيق شخصي', d: 'نساعدك في اختيار الإطلالة المناسبة لك ولمناسبتك.' },
+  { n: '04', t: 'فخر دمشقي', d: 'من قلب أقدم عاصمة مأهولة في العالم، إلى خزانتك.' },
+]
+const DEFAULT_STATS_EN = [{ v: '14', l: 'governorates served' }, { v: '20+', l: 'global labels' }, { v: '2026', l: 'established' }]
+const DEFAULT_STATS_AR = [{ v: '14', l: 'محافظة نخدمها' }, { v: '+20', l: 'ماركة عالمية' }, { v: '2026', l: 'منذ' }]
+
+function buildT(content, isAr) {
+  const t = (key, en, ar) => pick(content, key, isAr, isAr ? ar : en)
+  const defaultValues = isAr ? DEFAULT_VALUES_AR : DEFAULT_VALUES_EN
+  const defaultStats = isAr ? DEFAULT_STATS_AR : DEFAULT_STATS_EN
+  return {
+    kick: t('about.kick', 'The House', 'الدار'),
+    title: t('about.title', 'From the heart of Damascus', 'من قلب دمشق'),
+    title2: t('about.title2', 'to all of Syria', 'لكل المحافظات السورية'),
+    p1: t('about.p1', 'H.I. Brands began with a simple conviction: that the Syrian man deserves to wear the best — without having to travel to find it. From a small storefront in Damascus, we became a destination for those who understand that style is a language spoken before a word.', 'بدأت H.I. Brands من قناعة بسيطة: أن الرجل السوري يستحق أن يرتدي الأفضل، دون أن يضطر للسفر بحثاً عنه. من واجهة صغيرة في دمشق، صرنا وجهة لمن يعرف أن الأناقة لغة تُقال قبل الكلام.'),
+    p2: t('about.p2', "We don't simply sell clothing — we curate. Every piece passes through our hands before it reaches yours, delivered to your door in every governorate. Authentic labels, personal service, and an unshakeable local pride.", 'نحن لا نبيع ملابس فحسب — نختار. كل قطعة تمرّ بأيدينا قبل أن تصل إليك، ونوصلها إلى باب منزلك في كل محافظة. ماركات أصلية، خدمة شخصية، وفخر محلي لا يتزعزع.'),
+    quote: t('about.quote', 'Your outfit is your identity.. Choose right.', 'ملابسك هويتك.. اختر بشكل صحيح.'),
+    valKick: t('about.values_kick', 'What we believe', 'ما نؤمن به'),
+    values: defaultValues.map((fallback, i) => ({
+      n: pick(content, `about.values.${i}.n`, isAr, fallback.n),
+      t: pick(content, `about.values.${i}.t`, isAr, fallback.t),
+      d: pick(content, `about.values.${i}.d`, isAr, fallback.d),
+    })),
+    statKick: t('about.stats_kick', 'By the numbers', 'بالأرقام'),
+    stats: defaultStats.map((fallback, i) => ({
+      v: pick(content, `about.stats.${i}.v`, isAr, fallback.v),
+      l: pick(content, `about.stats.${i}.l`, isAr, fallback.l),
+    })),
+    ctaTitle: t('about.cta_title', 'Discover the collection', 'اكتشف التشكيلة'),
+    ctaBtn: t('about.cta_btn', 'Browse the collection', 'تصفّح التشكيلة'),
+    ctaContact: t('about.cta_contact', 'Get in touch', 'تواصل معنا'),
+  }
+}
+
 export default function About() {
   const { isAr } = useLang()
+  const { content } = useContent()
   const disp = isAr ? { fontFamily: 'var(--font-ar-display)' } : { fontFamily: 'var(--font-display)' }
-
-  const T = isAr ? {
-    kick: 'الدار', title: 'من قلب دمشق', title2: 'لكل المحافظات السورية',
-    introEn: 'From the heart of Damascus to all of Syria',
-    p1: 'بدأت H.I. Brands من قناعة بسيطة: أن الرجل السوري يستحق أن يرتدي الأفضل، دون أن يضطر للسفر بحثاً عنه. من واجهة صغيرة في دمشق، صرنا وجهة لمن يعرف أن الأناقة لغة تُقال قبل الكلام.',
-    p2: 'نحن لا نبيع ملابس فحسب — نختار. كل قطعة تمرّ بأيدينا قبل أن تصل إليك، ونوصلها إلى باب منزلك في كل محافظة. ماركات أصلية، خدمة شخصية، وفخر محلي لا يتزعزع.',
-    quote: 'ملابسك هويتك.. اختر بشكل صحيح.',
-    valKick: 'ما نؤمن به',
-    values: [
-      { n: '01', t: 'أصالة مضمونة', d: 'ماركات عالمية أصلية فقط — لا تقليد، لا أنصاف حلول.' },
-      { n: '02', t: 'نصل لكل سوريا', d: 'توصيل إلى كل المحافظات، بخدمة بوتيك من الباب إلى الباب.' },
-      { n: '03', t: 'تنسيق شخصي', d: 'نساعدك في اختيار الإطلالة المناسبة لك ولمناسبتك.' },
-      { n: '04', t: 'فخر دمشقي', d: 'من قلب أقدم عاصمة مأهولة في العالم، إلى خزانتك.' },
-    ],
-    statKick: 'بالأرقام',
-    stats: [{ v: '14', l: 'محافظة نخدمها' }, { v: '+20', l: 'ماركة عالمية' }, { v: '2026', l: 'منذ' }],
-    ctaTitle: 'اكتشف التشكيلة', ctaBtn: 'تصفّح التشكيلة', ctaContact: 'تواصل معنا',
-  } : {
-    kick: 'The House', title: 'From the heart of Damascus', title2: 'to all of Syria',
-    introEn: 'ملابسك هويتك.. اختر بشكل صحيح',
-    p1: 'H.I. Brands began with a simple conviction: that the Syrian man deserves to wear the best — without having to travel to find it. From a small storefront in Damascus, we became a destination for those who understand that style is a language spoken before a word.',
-    p2: "We don't simply sell clothing — we curate. Every piece passes through our hands before it reaches yours, delivered to your door in every governorate. Authentic labels, personal service, and an unshakeable local pride.",
-    quote: 'Your outfit is your identity.. Choose right.',
-    valKick: 'What we believe',
-    values: [
-      { n: '01', t: 'Guaranteed authenticity', d: 'Original international labels only — no imitations, no half measures.' },
-      { n: '02', t: 'All of Syria', d: 'Delivery to every governorate, with door-to-door boutique service.' },
-      { n: '03', t: 'Personal styling', d: 'We help you choose the look that suits you and the occasion.' },
-      { n: '04', t: 'Damascene pride', d: "From the heart of the world's oldest inhabited capital, to your wardrobe." },
-    ],
-    statKick: 'By the numbers',
-    stats: [{ v: '14', l: 'governorates served' }, { v: '20+', l: 'global labels' }, { v: '2026', l: 'established' }],
-    ctaTitle: 'Discover the collection', ctaBtn: 'Browse the collection', ctaContact: 'Get in touch',
-  }
+  const T = buildT(content, isAr)
 
   return (
     <>
@@ -63,9 +75,6 @@ export default function About() {
             <h1 className="mt-5" style={{ ...disp, fontSize: 'clamp(2.4rem,7vw,6rem)', lineHeight: 1.04, color: '#fff' }}>
               {T.title}<br /><span style={{ color: 'var(--gold)', fontStyle: isAr ? 'normal' : 'italic' }}>{T.title2}</span>
             </h1>
-          </Reveal>
-          <Reveal delay={220}>
-            <p className="mt-7" style={{ color: 'var(--text-dim)', fontFamily: isAr ? 'var(--font-sans)' : 'var(--font-ar-display)', fontStyle: isAr ? 'normal' : 'italic', fontSize: isAr ? '14px' : '22px' }}>{T.introEn}</p>
           </Reveal>
         </div>
       </section>

@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { useLang } from '../context/LanguageContext'
+import { useContent, pick, pickImage } from '../context/ContentContext'
 import { Reveal } from '../components/ui/Reveal'
 import { Cursor } from '../components/ui/Cursor'
 import { Curtain } from '../components/ui/Curtain'
-import { Placeholder } from '../components/ui/Placeholder'
+import { ContentImage } from '../components/ui/ContentImage'
 import { Icon } from '../components/ui/Icon'
 import { Nav } from '../components/Nav'
 import { Footer } from '../components/Footer'
@@ -18,32 +19,49 @@ function Field({ label, children, err }) {
   )
 }
 
+function buildT(content, isAr) {
+  const t = (key, en, ar) => pick(content, key, isAr, isAr ? ar : en)
+  return {
+    kick: t('contact.kick', 'Contact', 'تواصل'),
+    title: t('contact.title', "Let's talk", 'لنتحدّث'),
+    lead: t('contact.lead', "A question about a piece, a special request, or just hello — we're one message away.", 'سؤال عن قطعة، طلب خاص، أو مجرد سلام — نحن على بُعد رسالة.'),
+    chKick: t('contact.channels_kick', 'Channels', 'قنوات التواصل'),
+    waT: t('contact.whatsapp_title', 'WhatsApp', 'واتساب'),
+    waD: t('contact.whatsapp_desc', 'The fastest way to order & ask', 'أسرع طريقة للطلب والاستفسار'),
+    waBtn: t('contact.whatsapp_btn', 'Open WhatsApp', 'افتح واتساب'),
+    igT: t('contact.instagram_title', 'Instagram', 'إنستغرام'),
+    igD: t('contact.instagram_desc', 'Follow the latest pieces', 'تابع أحدث القطع'),
+    thT: t('contact.threads_title', 'Threads', 'ثريدز'),
+    thD: t('contact.threads_desc', '@h.i.brands', '@h.i.brands'),
+    locT: t('contact.location_title', 'Location', 'الموقع'),
+    locD: t('contact.location_desc', 'Damascus · Syria', 'دمشق · سوريا'),
+    hoursT: t('contact.hours_title', 'Hours', 'ساعات العمل'),
+    hoursD: t('contact.hours_desc', 'Sat – Thu · 11am – 9pm', 'السبت – الخميس · 11ص – 9م'),
+    formKick: t('contact.form_kick', 'Send a message', 'أرسل رسالة'),
+    fName: t('contact.field_name', 'Name', 'الاسم'),
+    fPhone: t('contact.field_phone', 'Phone (optional)', 'الهاتف (اختياري)'),
+    fMsg: t('contact.field_message', 'Your message', 'رسالتك'),
+    send: t('contact.send_btn', 'Send via WhatsApp', 'أرسل عبر واتساب'),
+    sentMsg: t('contact.sent_message', 'WhatsApp opened — finish sending there.', 'تم فتح واتساب — أكمل الإرسال هناك.'),
+    eName: t('contact.error_name', 'Please enter your name', 'الرجاء إدخال الاسم'),
+    eMsg: t('contact.error_message', 'Please write your message', 'الرجاء كتابة رسالتك'),
+    map: t('contact.map_label', 'Damascus, Syria', 'دمشق، سوريا'),
+  }
+}
+
 export default function Contact() {
   const { isAr } = useLang()
+  const { content } = useContent()
   const disp = isAr ? { fontFamily: 'var(--font-ar-display)' } : { fontFamily: 'var(--font-display)' }
   const [form, setForm] = useState({ name: '', phone: '', message: '' })
   const [errors, setErrors] = useState({})
   const [sent, setSent] = useState(false)
 
-  const T = isAr ? {
-    kick: 'تواصل', title: 'لنتحدّث', lead: 'سؤال عن قطعة، طلب خاص، أو مجرد سلام — نحن على بُعد رسالة.',
-    chKick: 'قنوات التواصل',
-    waT: 'واتساب', waD: 'أسرع طريقة للطلب والاستفسار', waBtn: 'افتح واتساب',
-    igT: 'إنستغرام', igD: 'تابع أحدث القطع', thT: 'ثريدز', thD: '@h.i.brands',
-    locT: 'الموقع', locD: 'دمشق · سوريا', hoursT: 'ساعات العمل', hoursD: 'السبت – الخميس · 11ص – 9م',
-    formKick: 'أرسل رسالة', fName: 'الاسم', fPhone: 'الهاتف (اختياري)', fMsg: 'رسالتك',
-    send: 'أرسل عبر واتساب', sentMsg: 'تم فتح واتساب — أكمل الإرسال هناك.',
-    eName: 'الرجاء إدخال الاسم', eMsg: 'الرجاء كتابة رسالتك', map: 'دمشق، سوريا',
-  } : {
-    kick: 'Contact', title: "Let's talk", lead: "A question about a piece, a special request, or just hello — we're one message away.",
-    chKick: 'Channels',
-    waT: 'WhatsApp', waD: 'The fastest way to order & ask', waBtn: 'Open WhatsApp',
-    igT: 'Instagram', igD: 'Follow the latest pieces', thT: 'Threads', thD: '@h.i.brands',
-    locT: 'Location', locD: 'Damascus · Syria', hoursT: 'Hours', hoursD: 'Sat – Thu · 11am – 9pm',
-    formKick: 'Send a message', fName: 'Name', fPhone: 'Phone (optional)', fMsg: 'Your message',
-    send: 'Send via WhatsApp', sentMsg: 'WhatsApp opened — finish sending there.',
-    eName: 'Please enter your name', eMsg: 'Please write your message', map: 'Damascus, Syria',
-  }
+  const T = buildT(content, isAr)
+  const whatsapp = pick(content, 'settings.whatsapp_number', isAr, '963000000000')
+  const igUrl = pick(content, 'settings.instagram_url', isAr, 'https://instagram.com/h.i.brands')
+  const igHandle = pick(content, 'settings.instagram_handle', isAr, '@h.i.brands')
+  const threadsUrl = pick(content, 'settings.threads_url', isAr, 'https://threads.net/@h.i.brands')
 
   const inputStyle = {
     width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid var(--line-strong)',
@@ -59,7 +77,7 @@ export default function Contact() {
     setErrors(errs)
     if (Object.keys(errs).length) return
     const msg = encodeURIComponent(`Hi H.I. Brands!\n\nName: ${form.name}${form.phone ? `\nPhone: ${form.phone}` : ''}\n\n${form.message}`)
-    window.open(`https://wa.me/963000000000?text=${msg}`, '_blank', 'noopener')
+    window.open(`https://wa.me/${whatsapp}?text=${msg}`, '_blank', 'noopener')
     setSent(true)
     setTimeout(() => setSent(false), 5000)
   }
@@ -96,9 +114,9 @@ export default function Contact() {
           <Reveal>
             <span className="label" style={{ display: 'block', textAlign: isAr ? 'right' : 'left' }}>{T.chKick}</span>
             <div className="mt-4">
-              <Channel icon={Icon.wa('w-6 h-6')} t={T.waT} d={T.waD} href="https://wa.me/963000000000" btn={T.waBtn} />
-              <Channel icon={Icon.ig('w-6 h-6')} t={T.igT} d={T.igD} href="https://instagram.com/h.i.brands" btn="@h.i.brands" />
-              <Channel icon={Icon.threads('w-6 h-6')} t={T.thT} d={T.thD} href="https://threads.net/@h.i.brands" btn="@h.i.brands" />
+              <Channel icon={Icon.wa('w-6 h-6')} t={T.waT} d={T.waD} href={`https://wa.me/${whatsapp}`} btn={T.waBtn} />
+              <Channel icon={Icon.ig('w-6 h-6')} t={T.igT} d={T.igD} href={igUrl} btn={igHandle} />
+              <Channel icon={Icon.threads('w-6 h-6')} t={T.thT} d={T.thD} href={threadsUrl} btn={igHandle} />
             </div>
             <div className="grid grid-cols-2 gap-6 mt-8" style={{ textAlign: isAr ? 'right' : 'left' }}>
               <div>
@@ -111,7 +129,7 @@ export default function Contact() {
               </div>
             </div>
             <div className="mt-8 relative">
-              <Placeholder label={T.map} ratio="16/7" />
+              <ContentImage src={pickImage(content, 'contact.map_image')} label={T.map} ratio="16/7" />
               <div className="absolute" style={{ top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: '10px', height: '10px', borderRadius: '999px', background: 'var(--gold)', boxShadow: '0 0 0 6px rgba(201,168,76,0.2)' }}></div>
             </div>
           </Reveal>

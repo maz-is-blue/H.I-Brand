@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { Monogram, Wordmark } from './ui/Monogram'
 import { useLang } from '../context/LanguageContext'
+import { useContent, pick } from '../context/ContentContext'
 
 const NAV_LINKS = [
   { k: 'home', to: '/', en: 'Home', ar: 'الرئيسية' },
@@ -10,8 +11,13 @@ const NAV_LINKS = [
   { k: 'contact', to: '/contact', en: 'Contact', ar: 'تواصل' },
 ]
 
+export function navLabel(content, link, isAr) {
+  return pick(content, `nav.${link.k}`, isAr, isAr ? link.ar : link.en)
+}
+
 export function Nav() {
   const { isAr, toggle } = useLang()
+  const { content } = useContent()
   const { pathname } = useLocation()
   const [open, setOpen] = useState(false)
   const [solid, setSolid] = useState(false)
@@ -50,7 +56,7 @@ export function Nav() {
               to={l.to}
               className={`navlink transition-colors ${isActive(l.to) ? 'active text-white' : 'text-white/65 hover:text-white'}`}
             >
-              {isAr ? l.ar : l.en}
+              {navLabel(content, l, isAr)}
             </Link>
           ))}
         </div>
@@ -90,7 +96,7 @@ export function Nav() {
         >
           {NAV_LINKS.map((l) => (
             <Link key={l.k} to={l.to} onClick={() => setOpen(false)} className={isActive(l.to) ? 'text-gold' : 'text-white/80'}>
-              {isAr ? l.ar : l.en}
+              {navLabel(content, l, isAr)}
             </Link>
           ))}
         </div>
