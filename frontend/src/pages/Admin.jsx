@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Monogram, Wordmark } from '../components/ui/Monogram'
 import { Placeholder } from '../components/ui/Placeholder'
+import { Cursor } from '../components/ui/Cursor'
 import { useProducts, CATEGORIES } from '../context/ProductsContext'
 import { api } from '../services/api'
 import ContentEditor from './admin/ContentEditor'
@@ -297,7 +298,12 @@ function ProductsPanel() {
 
 export default function Admin() {
   const [authed, setAuthed] = useState(() => !!localStorage.getItem('hib_admin_token'))
-  return authed
-    ? <Dashboard onLogout={() => setAuthed(false)} />
-    : <Login onAuth={() => setAuthed(true)} />
+  return (
+    <>
+      <Cursor />
+      {authed
+        ? <Dashboard onLogout={() => setAuthed(false)} />
+        : <Login onAuth={() => setAuthed(true)} />}
+    </>
+  )
 }
