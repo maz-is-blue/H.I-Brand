@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -49,7 +51,28 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
+        }
         $product->delete();
         return response()->json(['deleted' => true]);
+    }
+
+    public function uploadImage(Request $request, Product $product)
+    {
+        $request->validate([
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096',
+        ]);
+
+        if ($product->image_path) {
+            Storage::disk('public')->delete($product->image_path);
+        }
+
+        $filename = Str::random(20).'.'.$request->file('image')->extension();
+        $storedPath = $request->file('image')->storeAs('products', $filename, 'public');
+
+        $product->update(['image_path' => $storedPath]);
+
+        return response()->json($product);
     }
 }

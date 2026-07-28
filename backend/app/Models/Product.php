@@ -16,6 +16,7 @@ class Product extends Model
         'price',
         'category',
         'image_ratio',
+        'image_path',
         'featured',
     ];
 
@@ -23,4 +24,11 @@ class Product extends Model
         'price'    => 'float',
         'featured' => 'boolean',
     ];
+
+    protected $appends = ['image_url'];
+
+    public function getImageUrlAttribute(): ?string
+    {
+        return $this->image_path ? "/api/media/{$this->image_path}" : null;
+    }
 }

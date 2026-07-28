@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { Monogram, Wordmark } from '../components/ui/Monogram'
-import { Placeholder } from '../components/ui/Placeholder'
+import { ContentImage } from '../components/ui/ContentImage'
 import { Cursor } from '../components/ui/Cursor'
 import { useProducts, CATEGORIES } from '../context/ProductsContext'
 import { api } from '../services/api'
@@ -62,11 +62,22 @@ function Stat({ label, value, sub }) {
   )
 }
 
-function ProductModal({ editing, onClose, onSave }) {
+function ProductModal({ editing, onClose, onSave, onUploadImage }) {
   const blank = { brand: '', name_en: '', name_ar: '', price: '', category: CATEGORIES[0], image_ratio: '3/4', featured: false }
   const [d, setD] = useState(editing ? { ...editing, price: String(editing.price) } : blank)
   const [errs, setErrs] = useState({})
+  const [uploading, setUploading] = useState(false)
   const set = (k, v) => setD((p) => ({ ...p, [k]: v }))
+
+  const handleUpload = async (file) => {
+    setUploading(true)
+    try {
+      const updated = await onUploadImage(editing.id, file)
+      setD((p) => ({ ...p, image_path: updated.image_path, image_url: updated.image_url }))
+    } finally {
+      setUploading(false)
+    }
+  }
   const save = () => {
     const e = {}
     if (!d.brand.trim()) e.brand = 1
@@ -90,6 +101,23 @@ function ProductModal({ editing, onClose, onSave }) {
         </div>
         <div style={{ padding: '28px' }}>
           <div className="grid sm:grid-cols-2 gap-5">
+            <div className="sm:col-span-2">
+              <label style={fieldLabel}>Photo</label>
+              {editing ? (
+                <div className="flex items-center gap-4">
+                  <div style={{ width: '90px' }}>
+                    <ContentImage src={d.image_url} label={d.brand} ratio="1/1" style={{ borderRadius: '4px', border: '1px solid var(--line-strong)' }} />
+                  </div>
+                  <label className="btn-ghost" style={{ padding: '9px 16px', cursor: uploading ? 'default' : 'pointer', fontSize: '11px' }}>
+                    {uploading ? 'Uploading…' : 'Upload photo'}
+                    <input type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} disabled={uploading}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = '' }} />
+                  </label>
+                </div>
+              ) : (
+                <p style={{ color: 'var(--text-dim)', fontSize: '13px' }}>Save the piece first, then you can add a photo.</p>
+              )}
+            </div>
             <div className="sm:col-span-2">
               <label style={fieldLabel}>Brand *</label>
               <input value={d.brand} onChange={(e) => set('brand', e.target.value)} style={{ ...fieldInput, borderColor: errs.brand ? '#e06a5a' : 'var(--line-strong)' }} placeholder="e.g. Tommy Hilfiger" />
@@ -189,15 +217,23 @@ function ProductsPanel() {
       if (modal?.editing) {
         await api.updateProduct(modal.editing.id, data)
         flash('Piece updated')
+        await fetchProducts()
+        setModal(null)
       } else {
-        await api.createProduct(data)
-        flash('Piece added')
+        const created = await api.createProduct(data)
+        flash('Piece added — add a photo below')
+        await fetchProducts()
+        setModal({ editing: created })
       }
-      await fetchProducts()
-      setModal(null)
     } catch (err) {
       flash('Error: ' + err.message)
     }
+  }
+
+  const handleUploadImage = async (id, file) => {
+    const updated = await api.uploadProductImage(id, file)
+    await fetchProducts()
+    return updated
   }
 
   const handleDelete = async (id) => {
@@ -254,7 +290,7 @@ function ProductsPanel() {
               <tbody>
                 {products.map((p) => (
                   <tr key={p.id} style={{ borderBottom: '1px solid var(--line)' }}>
-                    <td style={{ padding: '12px 18px' }}><div style={{ width: '44px' }}><Placeholder label="" ratio="1/1" /></div></td>
+                    <td style={{ padding: '12px 18px' }}><div style={{ width: '44px' }}><ContentImage src={p.image_url} label="" ratio="1/1" /></div></td>
                     <td style={{ padding: '12px 18px', fontSize: '11px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>{p.brand}</td>
                     <td style={{ padding: '12px 18px', fontFamily: 'var(--font-display)', fontSize: '17px', color: '#fff' }}>{p.name_en}</td>
                     <td style={{ padding: '12px 18px', fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>{p.category}</td>
@@ -274,7 +310,7 @@ function ProductsPanel() {
           {products.length === 0 && <p style={{ textAlign: 'center', padding: '50px', color: 'var(--text-dim)', fontStyle: 'italic', fontFamily: 'var(--font-display)' }}>No pieces yet. Add your first.</p>}
         </div>
 
-      {modal && <ProductModal editing={modal.editing} onClose={() => setModal(null)} onSave={handleSave} />}
+      {modal && <ProductModal editing={modal.editing} onClose={() => setModal(null)} onSave={handleSave} onUploadImage={handleUploadImage} />}
 
       {confirmDel && (
         <div className="fixed inset-0" style={{ zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={() => setConfirmDel(null)}>

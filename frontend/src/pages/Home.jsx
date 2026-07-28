@@ -8,7 +8,6 @@ import { Reveal } from '../components/ui/Reveal'
 import { Cursor } from '../components/ui/Cursor'
 import { Curtain } from '../components/ui/Curtain'
 import { Magnetic } from '../components/ui/Magnetic'
-import { Placeholder } from '../components/ui/Placeholder'
 import { ContentImage } from '../components/ui/ContentImage'
 import { BrandStrip } from '../components/ui/BrandStrip'
 import { Icon } from '../components/ui/Icon'
@@ -48,7 +47,7 @@ function FeaturedCard({ p, i, isAr }) {
     <Reveal delay={(i % 4) * 90} className={i % 2 === 1 ? 'md:mt-24' : ''}>
       <Link to="/collections" className="group block" data-cursor data-cursor-label={isAr ? 'عرض' : 'View'}>
         <div className="frame overflow-hidden" style={{ border: '1px solid var(--line)' }}>
-          <Placeholder label={`${p.brand} · ${isAr ? p.name_ar : p.name_en}`} ratio={p.image_ratio} className="zoom-img" />
+          <ContentImage src={p.image_url} label={`${p.brand} · ${isAr ? p.name_ar : p.name_en}`} ratio={p.image_ratio} className="zoom-img" />
         </div>
         <div className="flex items-baseline justify-between mt-5" style={{ flexDirection: isAr ? 'row-reverse' : 'row' }}>
           <div style={{ textAlign: isAr ? 'right' : 'left' }}>

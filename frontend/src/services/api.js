@@ -16,9 +16,9 @@ async function request(method, path, body) {
   return data
 }
 
-async function uploadFile(path, key, file) {
+async function uploadFile(path, file, extraFields = {}) {
   const form = new FormData()
-  form.append('key', key)
+  Object.entries(extraFields).forEach(([k, v]) => form.append(k, v))
   form.append('image', file)
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
@@ -35,9 +35,10 @@ export const api = {
   createProduct: (data) => request('POST', '/products', data),
   updateProduct: (id, data) => request('PUT', `/products/${id}`, data),
   deleteProduct: (id) => request('DELETE', `/products/${id}`),
+  uploadProductImage: (id, file) => uploadFile(`/products/${id}/image`, file),
   adminLogin: (username, password) => request('POST', '/admin/login', { username, password }),
   adminLogout: () => request('POST', '/admin/logout'),
   getContent: () => request('GET', '/content'),
   updateContent: (items) => request('PUT', '/content', { items }),
-  uploadContentImage: (key, file) => uploadFile('/content/image', key, file),
+  uploadContentImage: (key, file) => uploadFile('/content/image', file, { key }),
 }

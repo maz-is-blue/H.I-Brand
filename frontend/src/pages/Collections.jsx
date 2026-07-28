@@ -5,7 +5,6 @@ import { useContent, pick, pickImage } from '../context/ContentContext'
 import { Reveal } from '../components/ui/Reveal'
 import { Cursor } from '../components/ui/Cursor'
 import { Curtain } from '../components/ui/Curtain'
-import { Placeholder } from '../components/ui/Placeholder'
 import { ContentImage } from '../components/ui/ContentImage'
 import { BrandStrip } from '../components/ui/BrandStrip'
 import { Icon } from '../components/ui/Icon'
@@ -38,7 +37,7 @@ function ProductCard({ p, isAr, orderBtn, whatsapp }) {
   return (
     <div className="group">
       <div className="relative overflow-hidden" style={{ border: '1px solid var(--line)' }}>
-        <Placeholder label={`${p.brand} · ${isAr ? p.name_ar : p.name_en}`} ratio={p.image_ratio} className="zoom-img" />
+        <ContentImage src={p.image_url} label={`${p.brand} · ${isAr ? p.name_ar : p.name_en}`} ratio={p.image_ratio} className="zoom-img" />
         <span className="absolute top-3" style={{ insetInlineStart: '12px', fontFamily: 'var(--font-sans)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', background: 'rgba(5,5,5,0.5)', padding: '4px 9px', backdropFilter: 'blur(4px)' }}>{p.category}</span>
         <div className="absolute inset-x-0 bottom-0 p-3" style={{ transform: 'translateY(100%)', transition: 'transform .5s', background: 'linear-gradient(transparent, rgba(5,5,5,0.85))' }}
           ref={el => {

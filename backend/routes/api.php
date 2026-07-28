@@ -17,6 +17,7 @@ Route::middleware(AdminAuth::class)->group(function () {
     Route::post('/products',           [ProductController::class, 'store']);
     Route::put('/products/{product}',  [ProductController::class, 'update']);
     Route::delete('/products/{product}', [ProductController::class, 'destroy']);
+    Route::post('/products/{product}/image', [ProductController::class, 'uploadImage']);
     Route::post('/admin/logout',       [AdminAuthController::class, 'logout']);
     Route::put('/content',             [ContentController::class, 'update']);
     Route::post('/content/image',      [ContentController::class, 'uploadImage']);
