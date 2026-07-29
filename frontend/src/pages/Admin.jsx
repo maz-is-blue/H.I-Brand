@@ -320,7 +320,8 @@ function ProductsPanel() {
         <Stat label="Avg price" value={`$${avg}`} />
       </div>
 
-        <div className="mt-9" style={{ ...card, borderRadius: '8px', overflow: 'hidden' }}>
+        {/* Desktop/tablet: table */}
+        <div className="hidden sm:block mt-9" style={{ ...card, borderRadius: '8px', overflow: 'hidden' }}>
           <div className="overflow-x-auto">
             <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '720px' }}>
               <thead>
@@ -351,6 +352,26 @@ function ProductsPanel() {
             </table>
           </div>
           {products.length === 0 && <p style={{ textAlign: 'center', padding: '50px', color: 'var(--text-dim)', fontStyle: 'italic', fontFamily: 'var(--font-display)' }}>No pieces yet. Add your first.</p>}
+        </div>
+
+        {/* Mobile: stacked cards, since a 720px-wide table can't fit a phone screen */}
+        <div className="sm:hidden mt-9 flex flex-col gap-3">
+          {products.map((p) => (
+            <div key={p.id} className="flex items-center gap-3" style={{ ...card, borderRadius: '8px', padding: '12px' }}>
+              <div style={{ width: '52px', flexShrink: 0 }}><ContentImage src={p.image_url} label="" ratio="1/1" style={{ borderRadius: '4px' }} /></div>
+              <div className="flex-1" style={{ minWidth: 0 }}>
+                <p style={{ fontFamily: 'var(--font-sans)', fontSize: '10px', letterSpacing: '0.12em', textTransform: 'uppercase', color: 'var(--text-dim)' }}>{p.brand}</p>
+                <p style={{ fontFamily: 'var(--font-display)', fontSize: '16px', color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.name_en}</p>
+                <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>{p.category} · <span style={{ color: 'var(--gold)' }}>${p.price}</span></p>
+              </div>
+              <div className="flex flex-col items-end gap-2" style={{ flexShrink: 0 }}>
+                <button onClick={() => toggleFeat(p)} title="Toggle featured" style={{ background: 'none', border: 'none', color: p.featured ? 'var(--gold)' : 'rgba(255,255,255,0.25)', fontSize: '18px', cursor: 'pointer', padding: 0 }}>{p.featured ? '★' : '☆'}</button>
+                <button onClick={() => setModal({ editing: p })} style={{ background: 'none', border: 'none', color: 'var(--gold)', fontSize: '12px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', padding: 0 }}>Edit</button>
+                <button onClick={() => setConfirmDel(p)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '12px', letterSpacing: '0.1em', textTransform: 'uppercase', cursor: 'pointer', padding: 0 }}>Delete</button>
+              </div>
+            </div>
+          ))}
+          {products.length === 0 && <p style={{ ...card, borderRadius: '8px', textAlign: 'center', padding: '50px', color: 'var(--text-dim)', fontStyle: 'italic', fontFamily: 'var(--font-display)' }}>No pieces yet. Add your first.</p>}
         </div>
 
       {modal && <ProductModal editing={modal.editing} onClose={() => setModal(null)} onSave={handleSave} onAddImage={handleAddImage} onDeleteImage={handleDeleteImage} />}
