@@ -62,36 +62,71 @@ function Stat({ label, value, sub }) {
   )
 }
 
-function ProductModal({ editing, onClose, onSave, onUploadImage }) {
+function ProductModal({ editing, onClose, onSave, onAddImage, onDeleteImage }) {
   const blank = { brand: '', name_en: '', name_ar: '', price: '', category: CATEGORIES[0], image_ratio: '3/4', featured: false }
   const [d, setD] = useState(editing ? { ...editing, price: String(editing.price) } : blank)
+  const [images, setImages] = useState(editing?.images || [])
+  const [staged, setStaged] = useState([])
   const [errs, setErrs] = useState({})
   const [uploading, setUploading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const set = (k, v) => setD((p) => ({ ...p, [k]: v }))
 
-  const handleUpload = async (file) => {
+  const addFiles = async (fileList) => {
+    const files = Array.from(fileList)
+    if (!editing) {
+      setStaged((p) => [...p, ...files.map((file) => ({ file, previewUrl: URL.createObjectURL(file) }))])
+      return
+    }
     setUploading(true)
     try {
-      const updated = await onUploadImage(editing.id, file)
-      setD((p) => ({ ...p, image_path: updated.image_path, image_url: updated.image_url }))
+      let updated
+      for (const file of files) {
+        updated = await onAddImage(editing.id, file)
+      }
+      if (updated) setImages(updated.images)
     } finally {
       setUploading(false)
     }
   }
-  const save = () => {
+
+  const removeStaged = (idx) => setStaged((p) => p.filter((_, i) => i !== idx))
+
+  const removeUploaded = async (imageId) => {
+    setUploading(true)
+    try {
+      const updated = await onDeleteImage(editing.id, imageId)
+      setImages(updated.images)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const save = async () => {
     const e = {}
     if (!d.brand.trim()) e.brand = 1
     if (!d.name_en.trim()) e.name_en = 1
     if (d.price === '' || isNaN(Number(d.price)) || Number(d.price) < 0) e.price = 1
     setErrs(e)
     if (Object.keys(e).length) return
-    onSave({ ...d, price: Number(d.price), name_ar: d.name_ar.trim() || d.name_en })
+    setSaving(true)
+    try {
+      await onSave({ ...d, price: Number(d.price), name_ar: d.name_ar.trim() || d.name_en }, staged.map((s) => s.file))
+    } finally {
+      setSaving(false)
+    }
   }
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
     document.addEventListener('keydown', onKey)
     return () => document.removeEventListener('keydown', onKey)
   }, [onClose])
+  useEffect(() => () => staged.forEach((s) => URL.revokeObjectURL(s.previewUrl)), []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const gallery = editing
+    ? images.map((img) => ({ key: img.id, url: img.url, onRemove: () => removeUploaded(img.id) }))
+    : staged.map((s, i) => ({ key: i, url: s.previewUrl, onRemove: () => removeStaged(i) }))
+
   return (
     <div className="fixed inset-0" style={{ zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} style={{ ...card, width: '100%', maxWidth: '560px', borderRadius: '8px', maxHeight: '90vh', overflowY: 'auto' }}>
@@ -102,21 +137,20 @@ function ProductModal({ editing, onClose, onSave, onUploadImage }) {
         <div style={{ padding: '28px' }}>
           <div className="grid sm:grid-cols-2 gap-5">
             <div className="sm:col-span-2">
-              <label style={fieldLabel}>Photo</label>
-              {editing ? (
-                <div className="flex items-center gap-4">
-                  <div style={{ width: '90px' }}>
-                    <ContentImage src={d.image_url} label={d.brand} ratio="1/1" style={{ borderRadius: '4px', border: '1px solid var(--line-strong)' }} />
+              <label style={fieldLabel}>Photos</label>
+              <div className="flex flex-wrap gap-3">
+                {gallery.map((g) => (
+                  <div key={g.key} style={{ position: 'relative', width: '76px' }}>
+                    <ContentImage src={g.url} label="" ratio="1/1" style={{ borderRadius: '4px', border: '1px solid var(--line-strong)' }} />
+                    <button type="button" onClick={g.onRemove} style={{ position: 'absolute', top: '-6px', insetInlineEnd: '-6px', width: '20px', height: '20px', borderRadius: '999px', background: '#e06a5a', color: '#fff', border: 'none', fontSize: '13px', lineHeight: 1, cursor: 'pointer' }}>×</button>
                   </div>
-                  <label className="btn-ghost" style={{ padding: '9px 16px', cursor: uploading ? 'default' : 'pointer', fontSize: '11px' }}>
-                    {uploading ? 'Uploading…' : 'Upload photo'}
-                    <input type="file" accept="image/png,image/jpeg,image/webp" style={{ display: 'none' }} disabled={uploading}
-                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(f); e.target.value = '' }} />
-                  </label>
-                </div>
-              ) : (
-                <p style={{ color: 'var(--text-dim)', fontSize: '13px' }}>Save the piece first, then you can add a photo.</p>
-              )}
+                ))}
+                <label className="btn-ghost" style={{ width: '76px', height: '76px', display: 'grid', placeItems: 'center', cursor: uploading ? 'default' : 'pointer', fontSize: '22px', borderRadius: '4px' }}>
+                  {uploading ? '…' : '+'}
+                  <input type="file" accept="image/png,image/jpeg,image/webp" multiple style={{ display: 'none' }} disabled={uploading}
+                    onChange={(e) => { if (e.target.files?.length) addFiles(e.target.files); e.target.value = '' }} />
+                </label>
+              </div>
             </div>
             <div className="sm:col-span-2">
               <label style={fieldLabel}>Brand *</label>
@@ -152,7 +186,9 @@ function ProductModal({ editing, onClose, onSave, onUploadImage }) {
             </div>
           </div>
           <div className="flex items-center gap-3 mt-8">
-            <button onClick={save} className="btn-gold" style={{ cursor: 'pointer' }}>{editing ? 'Save changes' : 'Add piece'}</button>
+            <button onClick={save} className="btn-gold" disabled={saving} style={{ cursor: saving ? 'default' : 'pointer' }}>
+              {saving ? '…' : editing ? 'Save changes' : 'Add piece'}
+            </button>
             <button onClick={onClose} className="btn-ghost" style={{ cursor: 'pointer' }}>Cancel</button>
           </div>
         </div>
@@ -212,26 +248,33 @@ function ProductsPanel() {
 
   const flash = (m) => { setToast(m); setTimeout(() => setToast(''), 2600) }
 
-  const handleSave = async (data) => {
+  const handleSave = async (data, stagedFiles = []) => {
     try {
       if (modal?.editing) {
         await api.updateProduct(modal.editing.id, data)
         flash('Piece updated')
-        await fetchProducts()
-        setModal(null)
       } else {
         const created = await api.createProduct(data)
-        flash('Piece added — add a photo below')
-        await fetchProducts()
-        setModal({ editing: created })
+        for (const file of stagedFiles) {
+          await api.addProductImage(created.id, file)
+        }
+        flash('Piece added')
       }
+      await fetchProducts()
+      setModal(null)
     } catch (err) {
       flash('Error: ' + err.message)
     }
   }
 
-  const handleUploadImage = async (id, file) => {
-    const updated = await api.uploadProductImage(id, file)
+  const handleAddImage = async (id, file) => {
+    const updated = await api.addProductImage(id, file)
+    await fetchProducts()
+    return updated
+  }
+
+  const handleDeleteImage = async (productId, imageId) => {
+    const updated = await api.deleteProductImage(productId, imageId)
     await fetchProducts()
     return updated
   }
@@ -310,7 +353,7 @@ function ProductsPanel() {
           {products.length === 0 && <p style={{ textAlign: 'center', padding: '50px', color: 'var(--text-dim)', fontStyle: 'italic', fontFamily: 'var(--font-display)' }}>No pieces yet. Add your first.</p>}
         </div>
 
-      {modal && <ProductModal editing={modal.editing} onClose={() => setModal(null)} onSave={handleSave} onUploadImage={handleUploadImage} />}
+      {modal && <ProductModal editing={modal.editing} onClose={() => setModal(null)} onSave={handleSave} onAddImage={handleAddImage} onDeleteImage={handleDeleteImage} />}
 
       {confirmDel && (
         <div className="fixed inset-0" style={{ zIndex: 200, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem', background: 'rgba(0,0,0,0.7)', backdropFilter: 'blur(4px)' }} onClick={() => setConfirmDel(null)}>

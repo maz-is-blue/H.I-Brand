@@ -16,7 +16,6 @@ class Product extends Model
         'price',
         'category',
         'image_ratio',
-        'image_path',
         'featured',
     ];
 
@@ -27,8 +26,14 @@ class Product extends Model
 
     protected $appends = ['image_url'];
 
+    public function images()
+    {
+        return $this->hasMany(ProductImage::class)->orderBy('sort_order');
+    }
+
     public function getImageUrlAttribute(): ?string
     {
-        return $this->image_path ? "/api/media/{$this->image_path}" : null;
+        $first = $this->relationLoaded('images') ? $this->images->first() : $this->images()->first();
+        return $first?->url;
     }
 }

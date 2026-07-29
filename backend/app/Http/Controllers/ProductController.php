@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Product;
+use App\Models\ProductImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -11,7 +12,7 @@ class ProductController extends Controller
 {
     public function index()
     {
-        return response()->json(Product::orderBy('created_at', 'desc')->get());
+        return response()->json(Product::with('images')->orderBy('created_at', 'desc')->get());
     }
 
     public function store(Request $request)
@@ -51,28 +52,35 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-        if ($product->image_path) {
-            Storage::disk('public')->delete($product->image_path);
+        foreach ($product->images as $image) {
+            Storage::disk('public')->delete($image->image_path);
         }
         $product->delete();
         return response()->json(['deleted' => true]);
     }
 
-    public function uploadImage(Request $request, Product $product)
+    public function addImage(Request $request, Product $product)
     {
         $request->validate([
             'image' => 'required|image|mimes:jpg,jpeg,png,webp|max:4096',
         ]);
 
-        if ($product->image_path) {
-            Storage::disk('public')->delete($product->image_path);
-        }
-
         $filename = Str::random(20).'.'.$request->file('image')->extension();
         $storedPath = $request->file('image')->storeAs('products', $filename, 'public');
 
-        $product->update(['image_path' => $storedPath]);
+        $nextOrder = (int) $product->images()->max('sort_order') + 1;
+        $product->images()->create(['image_path' => $storedPath, 'sort_order' => $nextOrder]);
 
-        return response()->json($product);
+        return response()->json($product->load('images'));
+    }
+
+    public function deleteImage(Product $product, ProductImage $image)
+    {
+        abort_unless($image->product_id === $product->id, 404);
+
+        Storage::disk('public')->delete($image->image_path);
+        $image->delete();
+
+        return response()->json($product->load('images'));
     }
 }
