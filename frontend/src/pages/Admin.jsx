@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { Monogram, Wordmark } from '../components/ui/Monogram'
 import { ContentImage } from '../components/ui/ContentImage'
 import { Cursor } from '../components/ui/Cursor'
-import { useProducts, CATEGORIES } from '../context/ProductsContext'
+import { useProducts, CATEGORY_TREE, SIZES } from '../context/ProductsContext'
 import { api } from '../services/api'
 import ContentEditor from './admin/ContentEditor'
 
@@ -63,14 +63,32 @@ function Stat({ label, value, sub }) {
 }
 
 function ProductModal({ editing, onClose, onSave, onAddImage, onDeleteImage }) {
-  const blank = { brand: '', name_en: '', name_ar: '', price: '', category: CATEGORIES[0], image_ratio: '3/4', featured: false }
-  const [d, setD] = useState(editing ? { ...editing, price: String(editing.price) } : blank)
+  const blank = { brand: '', name_en: '', name_ar: '', price: '', category: CATEGORY_TREE[0].key, subcategory: null, sub_subcategory: null, sizes: [], colors: [], image_ratio: '3/4', featured: false }
+  const [d, setD] = useState(editing ? { ...editing, price: String(editing.price), sizes: editing.sizes || [], colors: editing.colors || [] } : blank)
   const [images, setImages] = useState(editing?.images || [])
   const [staged, setStaged] = useState([])
   const [errs, setErrs] = useState({})
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [colorInput, setColorInput] = useState('')
   const set = (k, v) => setD((p) => ({ ...p, [k]: v }))
+
+  const catNode = CATEGORY_TREE.find((c) => c.key === d.category)
+  const subNode = catNode?.subs?.find((s) => s.key === d.subcategory)
+  const nodeLabel = (n) => `${n.en} (${n.ar})`
+
+  const onCategoryChange = (key) => setD((p) => ({ ...p, category: key, subcategory: null, sub_subcategory: null }))
+  const onSubChange = (key) => setD((p) => ({ ...p, subcategory: key || null, sub_subcategory: null }))
+  const onSubSubChange = (key) => setD((p) => ({ ...p, sub_subcategory: key || null }))
+
+  const toggleSize = (s) => setD((p) => ({ ...p, sizes: p.sizes.includes(s) ? p.sizes.filter((x) => x !== s) : [...p.sizes, s] }))
+
+  const addColor = () => {
+    const v = colorInput.trim()
+    if (v && !d.colors.includes(v)) setD((p) => ({ ...p, colors: [...p.colors, v] }))
+    setColorInput('')
+  }
+  const removeColor = (c) => setD((p) => ({ ...p, colors: p.colors.filter((x) => x !== c) }))
 
   const addFiles = async (fileList) => {
     const files = Array.from(fileList)
@@ -170,8 +188,8 @@ function ProductModal({ editing, onClose, onSave, onAddImage, onDeleteImage }) {
             </div>
             <div>
               <label style={fieldLabel}>Category</label>
-              <select value={d.category} onChange={(e) => set('category', e.target.value)} style={fieldInput}>
-                {CATEGORIES.map((c) => <option key={c} value={c} style={{ background: '#0a0a0a' }}>{c}</option>)}
+              <select value={d.category} onChange={(e) => onCategoryChange(e.target.value)} style={fieldInput}>
+                {CATEGORY_TREE.map((c) => <option key={c.key} value={c.key} style={{ background: '#0a0a0a' }}>{nodeLabel(c)}</option>)}
               </select>
             </div>
             <div>
@@ -179,6 +197,49 @@ function ProductModal({ editing, onClose, onSave, onAddImage, onDeleteImage }) {
               <select value={d.image_ratio} onChange={(e) => set('image_ratio', e.target.value)} style={fieldInput}>
                 {RATIOS.map((r) => <option key={r} value={r} style={{ background: '#0a0a0a' }}>{r}</option>)}
               </select>
+            </div>
+            {catNode?.subs && (
+              <div>
+                <label style={fieldLabel}>Sub-category</label>
+                <select value={d.subcategory || ''} onChange={(e) => onSubChange(e.target.value)} style={fieldInput}>
+                  <option value="" style={{ background: '#0a0a0a' }}>—</option>
+                  {catNode.subs.map((s) => <option key={s.key} value={s.key} style={{ background: '#0a0a0a' }}>{nodeLabel(s)}</option>)}
+                </select>
+              </div>
+            )}
+            {subNode?.subs && (
+              <div>
+                <label style={fieldLabel}>Type</label>
+                <select value={d.sub_subcategory || ''} onChange={(e) => onSubSubChange(e.target.value)} style={fieldInput}>
+                  <option value="" style={{ background: '#0a0a0a' }}>—</option>
+                  {subNode.subs.map((s) => <option key={s.key} value={s.key} style={{ background: '#0a0a0a' }}>{nodeLabel(s)}</option>)}
+                </select>
+              </div>
+            )}
+            <div className="sm:col-span-2">
+              <label style={fieldLabel}>Sizes</label>
+              <div className="flex flex-wrap gap-2">
+                {SIZES.map((s) => (
+                  <button key={s} type="button" onClick={() => toggleSize(s)}
+                    style={{ cursor: 'pointer', border: `1px solid ${d.sizes.includes(s) ? 'var(--gold)' : 'var(--line-strong)'}`, color: d.sizes.includes(s) ? '#0a0a0a' : 'rgba(255,255,255,0.75)', background: d.sizes.includes(s) ? 'var(--gold)' : 'transparent', borderRadius: '999px', padding: '7px 16px', fontFamily: 'var(--font-sans)', fontSize: '12px' }}>
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="sm:col-span-2">
+              <label style={fieldLabel}>Colors</label>
+              <div className="flex flex-wrap gap-2 mb-2">
+                {d.colors.map((c) => (
+                  <span key={c} className="flex items-center gap-2" style={{ border: '1px solid var(--line-strong)', borderRadius: '999px', padding: '6px 8px 6px 14px', fontSize: '12px', color: '#fff' }}>
+                    {c}
+                    <button type="button" onClick={() => removeColor(c)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', cursor: 'pointer', fontSize: '14px', lineHeight: 1, padding: 0 }}>×</button>
+                  </span>
+                ))}
+              </div>
+              <input value={colorInput} onChange={(e) => setColorInput(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addColor() } }}
+                onBlur={addColor} style={fieldInput} placeholder="Type a color and press Enter" />
             </div>
             <div className="sm:col-span-2 flex items-center gap-3 mt-1">
               <input id="feat" type="checkbox" checked={d.featured} onChange={(e) => set('featured', e.target.checked)} style={{ width: '18px', height: '18px', accentColor: '#C9A84C' }} />

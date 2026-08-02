@@ -148,11 +148,12 @@ class ContentSeeder extends Seeder
             'collections.empty'                  => $text('Collections — Empty category message', 'No pieces in this category yet.', 'لا توجد قطع في هذه الفئة بعد.'),
             'collections.order_whatsapp_btn'      => $text('Collections — "Order via WhatsApp" button', 'Order via WhatsApp', 'اطلب عبر واتساب'),
             'collections.category.All'           => $text('Collections — Category: All', 'All', 'الكل'),
-            'collections.category.Outerwear'     => $text('Collections — Category: Outerwear', 'Outerwear', 'معاطف'),
-            'collections.category.Shirts'        => $text('Collections — Category: Shirts', 'Shirts', 'قمصان'),
-            'collections.category.Knitwear'      => $text('Collections — Category: Knitwear', 'Knitwear', 'تريكو'),
             'collections.category.T-Shirts'      => $text('Collections — Category: T-Shirts', 'T-Shirts', 'تيشيرتات'),
+            'collections.category.Knitwear'      => $text('Collections — Category: Knitwear', 'Knitwear', 'تريكو'),
             'collections.category.Trousers'      => $text('Collections — Category: Trousers', 'Trousers', 'بناطيل'),
+            'collections.category.Pajamas'       => $text('Collections — Category: Pajamas', 'Pajamas', 'بجامات'),
+            'collections.category.Pajama-Pants'  => $text('Collections — Category: Pajama Pants', 'Pajama Pants', 'بنطال بجامة مفرد'),
+            'collections.category.Shirt'         => $text('Collections — Category: Shirt', 'Shirt', 'قميص'),
         ];
     }
 }

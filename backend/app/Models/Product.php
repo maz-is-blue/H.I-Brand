@@ -15,6 +15,10 @@ class Product extends Model
         'name_ar',
         'price',
         'category',
+        'subcategory',
+        'sub_subcategory',
+        'sizes',
+        'colors',
         'image_ratio',
         'featured',
     ];
@@ -22,6 +26,8 @@ class Product extends Model
     protected $casts = [
         'price'    => 'float',
         'featured' => 'boolean',
+        'sizes'    => 'array',
+        'colors'   => 'array',
     ];
 
     protected $appends = ['image_url'];

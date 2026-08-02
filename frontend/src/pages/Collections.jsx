@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useLang } from '../context/LanguageContext'
-import { useProducts, CATEGORIES, waLink } from '../context/ProductsContext'
+import { useProducts, CATEGORIES, CATEGORY_TREE, categoryLabel, waLink } from '../context/ProductsContext'
 import { useContent, pick, pickImage } from '../context/ContentContext'
 import { Reveal } from '../components/ui/Reveal'
 import { Cursor } from '../components/ui/Cursor'
@@ -11,8 +11,14 @@ import { Icon } from '../components/ui/Icon'
 import { Nav } from '../components/Nav'
 import { Footer } from '../components/Footer'
 
-const DEFAULT_CATEGORY_LABELS = {
-  All: 'All', Outerwear: 'Outerwear', Shirts: 'Shirts', Knitwear: 'Knitwear', 'T-Shirts': 'T-Shirts', Trousers: 'Trousers',
+function productTypeLabel(p, isAr) {
+  const cat = CATEGORY_TREE.find((c) => c.key === p.category)
+  if (!cat) return p.category
+  const sub = cat.subs?.find((s) => s.key === p.subcategory)
+  if (!sub) return isAr ? cat.ar : cat.en
+  const subsub = sub.subs?.find((s) => s.key === p.sub_subcategory)
+  if (!subsub) return isAr ? sub.ar : sub.en
+  return isAr ? subsub.ar : subsub.en
 }
 
 function buildT(content, isAr) {
@@ -38,7 +44,7 @@ function ProductCard({ p, isAr, orderBtn, whatsapp }) {
     <div className="group">
       <div className="relative overflow-hidden" style={{ border: '1px solid var(--line)' }}>
         <ContentImage src={p.image_url} label={`${p.brand} · ${isAr ? p.name_ar : p.name_en}`} ratio={p.image_ratio} className="zoom-img" />
-        <span className="absolute top-3" style={{ insetInlineStart: '12px', fontFamily: 'var(--font-sans)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', background: 'rgba(5,5,5,0.5)', padding: '4px 9px', backdropFilter: 'blur(4px)' }}>{p.category}</span>
+        <span className="absolute top-3" style={{ insetInlineStart: '12px', fontFamily: 'var(--font-sans)', fontSize: '9px', letterSpacing: '0.2em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', background: 'rgba(5,5,5,0.5)', padding: '4px 9px', backdropFilter: 'blur(4px)' }}>{productTypeLabel(p, isAr)}</span>
         <div className="absolute inset-x-0 bottom-0 p-3" style={{ transform: 'translateY(100%)', transition: 'transform .5s', background: 'linear-gradient(transparent, rgba(5,5,5,0.85))' }}
           ref={el => {
             if (!el) return
@@ -60,6 +66,13 @@ function ProductCard({ p, isAr, orderBtn, whatsapp }) {
         </div>
         <span className="font-display shrink-0" style={{ color: 'var(--gold)', fontSize: '19px' }}>${p.price}</span>
       </div>
+      {(p.sizes?.length > 0 || p.colors?.length > 0) && (
+        <p className="mt-2" style={{ textAlign: isAr ? 'right' : 'left', fontSize: '11px', color: 'var(--text-dim)', fontFamily: 'var(--font-sans)' }}>
+          {p.sizes?.length > 0 && p.sizes.join(' / ')}
+          {p.sizes?.length > 0 && p.colors?.length > 0 && '  ·  '}
+          {p.colors?.length > 0 && p.colors.join(', ')}
+        </p>
+      )}
     </div>
   )
 }
@@ -73,7 +86,7 @@ export default function Collections() {
   const cats = ['All', ...CATEGORIES]
   const filtered = cat === 'All' ? products : products.filter((p) => p.category === cat)
 
-  const catLabel = (c) => pick(content, `collections.category.${c}`, isAr, DEFAULT_CATEGORY_LABELS[c] || c)
+  const catLabel = (c) => pick(content, `collections.category.${c}`, isAr, c === 'All' ? (isAr ? 'الكل' : 'All') : categoryLabel(c, isAr))
 
   const T = buildT(content, isAr)
   const whatsapp = pick(content, 'settings.whatsapp_number', isAr, '963000000000')

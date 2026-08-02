@@ -10,6 +10,12 @@ use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
+    // Top-level categories only — subcategory/sub_subcategory are free-form
+    // strings from the admin's cascading dropdown, not re-validated against
+    // the tree here (same trust level as the rest of this admin-only form).
+    private const CATEGORIES = 'T-Shirts,Knitwear,Trousers,Pajamas,Pajama-Pants,Shirt';
+    private const SIZES = 'XS,S,M,L,XL,XXL,XXXL';
+
     public function index()
     {
         return response()->json(Product::with('images')->orderBy('created_at', 'desc')->get());
@@ -18,13 +24,19 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $data = $request->validate([
-            'brand'       => 'required|string|max:120',
-            'name_en'     => 'required|string|max:200',
-            'name_ar'     => 'nullable|string|max:200',
-            'price'       => 'required|numeric|min:0',
-            'category'    => 'required|in:Outerwear,Shirts,Knitwear,T-Shirts,Trousers',
-            'image_ratio' => 'required|in:3/4,4/5,1/1,16/10',
-            'featured'    => 'boolean',
+            'brand'           => 'required|string|max:120',
+            'name_en'         => 'required|string|max:200',
+            'name_ar'         => 'nullable|string|max:200',
+            'price'           => 'required|numeric|min:0',
+            'category'        => 'required|in:'.self::CATEGORIES,
+            'subcategory'     => 'nullable|string|max:60',
+            'sub_subcategory' => 'nullable|string|max:60',
+            'sizes'           => 'nullable|array',
+            'sizes.*'         => 'in:'.self::SIZES,
+            'colors'          => 'nullable|array',
+            'colors.*'        => 'string|max:40',
+            'image_ratio'     => 'required|in:3/4,4/5,1/1,16/10',
+            'featured'        => 'boolean',
         ]);
 
         $data['name_ar'] = $data['name_ar'] ?? $data['name_en'];
@@ -36,13 +48,19 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $data = $request->validate([
-            'brand'       => 'sometimes|required|string|max:120',
-            'name_en'     => 'sometimes|required|string|max:200',
-            'name_ar'     => 'nullable|string|max:200',
-            'price'       => 'sometimes|required|numeric|min:0',
-            'category'    => 'sometimes|required|in:Outerwear,Shirts,Knitwear,T-Shirts,Trousers',
-            'image_ratio' => 'sometimes|required|in:3/4,4/5,1/1,16/10',
-            'featured'    => 'boolean',
+            'brand'           => 'sometimes|required|string|max:120',
+            'name_en'         => 'sometimes|required|string|max:200',
+            'name_ar'         => 'nullable|string|max:200',
+            'price'           => 'sometimes|required|numeric|min:0',
+            'category'        => 'sometimes|required|in:'.self::CATEGORIES,
+            'subcategory'     => 'nullable|string|max:60',
+            'sub_subcategory' => 'nullable|string|max:60',
+            'sizes'           => 'nullable|array',
+            'sizes.*'         => 'in:'.self::SIZES,
+            'colors'          => 'nullable|array',
+            'colors.*'        => 'string|max:40',
+            'image_ratio'     => 'sometimes|required|in:3/4,4/5,1/1,16/10',
+            'featured'        => 'boolean',
         ]);
 
         $product->update($data);
