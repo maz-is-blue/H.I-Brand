@@ -73,14 +73,17 @@ export function waLink(p, whatsappNumber = '963000000000') {
 export function ProductsProvider({ children }) {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [isFallback, setIsFallback] = useState(false)
 
   const fetchProducts = useCallback(async () => {
     setLoading(true)
     try {
       const data = await api.getProducts()
       setProducts(data)
+      setIsFallback(false)
     } catch {
       setProducts(SEED_PRODUCTS)
+      setIsFallback(true)
     } finally {
       setLoading(false)
     }
@@ -88,8 +91,18 @@ export function ProductsProvider({ children }) {
 
   useEffect(() => { fetchProducts() }, [fetchProducts])
 
+  // Mobile Safari can restore a page from its back-forward cache exactly as
+  // it was in memory, without re-running this effect -- so a stale product
+  // list (from before an edit/delete elsewhere) can stick around indefinitely
+  // unless we explicitly refetch when that happens.
+  useEffect(() => {
+    const onPageShow = (e) => { if (e.persisted) fetchProducts() }
+    window.addEventListener('pageshow', onPageShow)
+    return () => window.removeEventListener('pageshow', onPageShow)
+  }, [fetchProducts])
+
   return (
-    <ProductsContext.Provider value={{ products, loading, fetchProducts }}>
+    <ProductsContext.Provider value={{ products, loading, isFallback, fetchProducts }}>
       {children}
     </ProductsContext.Provider>
   )

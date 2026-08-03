@@ -302,7 +302,7 @@ function Dashboard({ onLogout }) {
 }
 
 function ProductsPanel() {
-  const { products, fetchProducts } = useProducts()
+  const { products, isFallback, fetchProducts } = useProducts()
   const [modal, setModal] = useState(null)
   const [toast, setToast] = useState('')
   const [confirmDel, setConfirmDel] = useState(null)
@@ -361,6 +361,19 @@ function ProductsPanel() {
   const featured = products.filter((p) => p.featured).length
   const brands = new Set(products.map((p) => p.brand)).size
   const avg = products.length ? Math.round(products.reduce((s, p) => s + Number(p.price), 0) / products.length) : 0
+
+  if (isFallback) {
+    return (
+      <div style={{ ...card, borderRadius: '8px', padding: '40px', textAlign: 'center' }}>
+        <p style={{ color: '#fff', fontFamily: 'var(--font-display)', fontSize: '20px' }}>Couldn't reach the server</p>
+        <p style={{ color: 'var(--text-dim)', fontSize: '14px', marginTop: '10px', maxWidth: '440px', marginInline: 'auto' }}>
+          This is showing placeholder demo data, not your real catalogue — editing is disabled so nothing gets
+          saved against products that don't actually exist. Check your connection and try again.
+        </p>
+        <button onClick={fetchProducts} className="btn-gold" style={{ marginTop: '22px', padding: '11px 26px', cursor: 'pointer' }}>Retry</button>
+      </div>
+    )
+  }
 
   return (
     <>
