@@ -94,7 +94,7 @@ class ProductController extends Controller
 
     public function deleteImage(Product $product, ProductImage $image)
     {
-        abort_unless($image->product_id === $product->id, 404);
+        abort_unless((int) $image->product_id === (int) $product->id, 404);
 
         Storage::disk('public')->delete($image->image_path);
         $image->delete();
